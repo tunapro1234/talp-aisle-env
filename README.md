@@ -14,6 +14,7 @@ reads what it can see and the model writes what it does and its status. Output i
 | `world.json` | company variables: `value`, `kind` (fixed / decision / weekly), `source` (dossier sentence or `ours: reason`) |
 | `test_world.py` | every menu action moves its variable for its weeks; budget; strike backlog; same inputs, same world |
 | `metrics.py` | persona behaviour -> board goals 1-4, weighted by how many people each persona stands for |
+| `report.py` | `python report.py [runs/a runs/b ...]` -> `runs/report.html`: runs side by side, sales vs plan, status mix, delivery, policy grid, persona notes (no LLM) |
 | `aisle.json` | the dossier as data: statuses, weeks, known crisis, business as usual, action texts, check-in questions |
 | `personas.jsonl` | personas: `id`, `group`, `name`, `weight`, `traits`, `story` |
 | `decisions/plan.json` | an example plan (decision 1 has three actions); `decisions/none.json` is empty |
