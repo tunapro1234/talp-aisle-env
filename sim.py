@@ -15,7 +15,7 @@ from pathlib import Path
 
 import llm
 from metrics import compute
-from world import World, check
+from world import World, check, normalize
 
 HERE = Path(__file__).resolve().parent
 CFG = json.loads((HERE / "aisle.json").read_text())
@@ -141,7 +141,8 @@ class Run:
         self.a = a
         self.out = Path(a.out or HERE / "runs" / f"{a.type}_{a.seed}")
         self.personas = load_jsonl(HERE / "personas.jsonl")[: a.limit or None]
-        self.decisions = [] if a.type == "nodecision" else json.loads(Path(a.decisions).read_text())
+        self.locked = [] if a.type == "nodecision" else json.loads(Path(a.decisions).read_text())   # run.json keeps these
+        self.decisions = normalize(self.locked)
         news = json.loads((HERE / "announcements.json").read_text())
         self.news = [n for n in news if not (a.type == "plan_nosurprises" and n.get("surprise", True))]
         errors = check(self.decisions, lambda t: any(targets(t, g) for g in CFG["statuses"]))
@@ -217,7 +218,7 @@ class Run:
         m = compute(self.personas, self.weekly, self.probe)
         (self.out / "metrics.json").write_text(json.dumps(m, indent=2) + "\n")
         run = {"company": CFG["company"], "type": self.a.type, "seed": self.a.seed, "model": self.a.model,
-               "decisions": self.decisions, "announcements": [n.get("id", n["title"]) for n in self.news]}
+               "decisions": self.locked, "announcements": [n.get("id", n["title"]) for n in self.news]}
         self.world.write(self.out / "world_weekly.csv")
         (self.out / "run.json").write_text(json.dumps(run, indent=2, ensure_ascii=False) + "\n")   # last: marks a finished run
         st = llm.STATS

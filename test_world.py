@@ -3,11 +3,14 @@ import filecmp
 import subprocess
 import sys
 
-from world import W, World, check
+import glob
+import json
+
+from world import W, World, check, normalize
 
 # Each menu action: (level, variable, value while in force, weeks in force).
 ACTIONS = {
-    "discount": ("10%", "discount", "10% fashion", 1),
+    "discount": ("10%", "discount", "10% fashion", 1),   # category from the message
     "free_shipping": ("no minimum", "free_ship_threshold", 0, 2),
     "extra_capacity": ("+40%", "spare_capacity", 0.4, 2),
     "delivery_promise": ("on time or a $5 credit", "checkout_promise", "on time or a $5 credit", 6),   # to week 10
@@ -21,8 +24,9 @@ ACTIONS = {
 
 
 def decision(week, *actions):
-    acts = [{"action": a, "level": ACTIONS[a][0], **({"category": "fashion"} if a == "discount" else {})} for a in actions]
-    return {"week": week, "target": "everyone", "actions": acts, "message": "m", "channels": ["email"], "why": []}
+    acts = [{"action": a, "level": ACTIONS[a][0]} for a in actions]
+    return normalize([{"week": week, "target": "everyone", "actions": acts, "message": "10% off fashion", "channels": ["email"],
+                       "why": []}])[0]
 
 
 def test_each_action_moves_its_variable():
@@ -60,6 +64,18 @@ def test_strike_backlog_and_spare_capacity():
     plain, helped = backlog([]), backlog([decision(5, "extra_capacity")])
     assert plain[4] == 0 and plain[5] > 0, plain                 # backlog starts with the strike in week 5
     assert helped[5] < plain[5] and helped[7] < plain[7], (plain, helped)   # +40% in weeks 5-6, less left after
+
+
+def test_team_decision_files():
+    """The team's candidates name actions by the menu row; they must pass and keep their meaning."""
+    files = glob.glob("/srv/lighthouse/hackathon-coz/projeler/talp-simulation-hackathon-2026/yarisma/aisle/kararlar/*.json")
+    for f in files:
+        if f.endswith(".taslak.json"):          # drafts, week not chosen yet
+            assert check(normalize(json.load(open(f))), lambda t: True)
+            continue
+        d = normalize(json.load(open(f)))
+        assert check(d, lambda t: True) == [], (f, check(d, lambda t: True))
+    return len(files)
 
 
 def test_same_inputs_same_world():

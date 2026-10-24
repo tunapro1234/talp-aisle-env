@@ -26,6 +26,28 @@ def level(s):
     return str(s).replace("–", "-").replace("—", "-").strip('"')
 
 
+def _plain(s):
+    return " ".join(level(s).replace("→", "->").lower().split())
+
+
+def normalize(decisions):
+    """Copies of the decisions with menu keys: an action may be named by its key or by the menu row, word for word.
+    A discount without "category" takes the first category named in its message or target."""
+    rows = {_plain(row): k for k, row in W["menu_rows"].items()}
+    out = []
+    for d in decisions:
+        acts = []
+        for a in d.get("actions") or []:
+            key = a.get("action") if a.get("action") in W["action_cost"] else rows.get(_plain(a.get("action", "")), a.get("action"))
+            a = {**a, "action": key, "level": level(a.get("level"))}
+            if key == "discount" and "category" not in a:
+                text = f"{d.get('message', '')} {d.get('target', '')}".lower()
+                a["category"] = next((c for c in CATEGORIES if c in text), "one category")
+            acts.append(a)
+        out.append({**d, "actions": acts})
+    return out
+
+
 def cost(a):
     return W["action_cost"][a["action"]][level(a["level"])]
 
@@ -50,7 +72,7 @@ def check(decisions, reaches):
     lo, hi = W["actions_per_decision"]
     for i, d in enumerate(decisions, 1):
         acts = d.get("actions") or []
-        if not 1 <= d.get("week", 0) <= 10:
+        if not isinstance(d.get("week"), int) or not 1 <= d["week"] <= 10:
             err.append(f"decision {i}: week {d.get('week')} is not 1-10")
         if not lo <= len(acts) <= hi:
             err.append(f"decision {i}: {len(acts)} actions, must be {lo}-{hi}")
@@ -62,8 +84,6 @@ def check(decisions, reaches):
                 err.append(f"decision {i}: '{a.get('action')}' is not on the menu ({', '.join(W['action_cost'])})")
             elif level(a.get("level")) not in levels:
                 err.append(f"decision {i}: {a['action']} level '{a.get('level')}' not in {list(levels)}")
-            if a.get("action") == "discount" and a.get("category") not in CATEGORIES:
-                err.append(f"decision {i}: discount needs \"category\": one of {CATEGORIES}")
         if not 0 < len(d.get("message", "")) <= W["message_max_chars"]:
             err.append(f"decision {i}: message must be 1-{W['message_max_chars']} characters")
         if not d.get("channels") or set(d["channels"]) - set(W["channels"]):

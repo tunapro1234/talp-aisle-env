@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "id": "w3-fake-sneakers",
+    "week": 3,
+    "title": "The fake sneakers video",
+    "text": "A TikTok creator with 1.8 million followers posted a video: sneakers bought on Aisle, she says, are fake. It is being shared widely; people are tagging Aisle under its Black Friday ads. Known: the order is real and came from a seller on Aisle. Not known: whether the sneakers are fake; how many sellers or products are involved.",
+    "surprise": true,
+    "source": "dashboard, Company update week 3, published 24 Oct 14:00"
+  }
+]

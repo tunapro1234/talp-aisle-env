@@ -215,5 +215,21 @@
     "value": 2,
     "kind": "fixed",
     "source": "You make exactly two decisions for your client, in any weeks you choose. (02-challenge.md)"
+  },
+  "menu_rows": {
+    "value": {
+      "discount": "Discount paid by Aisle, one category, one week you choose",
+      "free_shipping": "Free shipping threshold for 2 weeks",
+      "extra_capacity": "Extra capacity from Meridian and Dash for 2 weeks",
+      "delivery_promise": "Delivery promise at checkout",
+      "seller_check": "Seller check: audit the top 500 sellers in risky categories, suspend those that fail",
+      "authenticity_guarantee": "Authenticity guarantee for 8 weeks: double refund if a product is proven fake",
+      "free_returns": "Free return shipping for 4 weeks",
+      "faster_payouts": "Faster seller payouts (weekly → twice a week) for 6 weeks",
+      "extra_support": "Extra support staff for 4 weeks (+100)",
+      "ads": "Ads and influencer content"
+    },
+    "kind": "fixed",
+    "source": "Decision menu, the Action column word for word: a decision may name an action by this text or by its key."
   }
 }
