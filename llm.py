@@ -4,9 +4,13 @@
   gemini-*   Vertex AI through google-genai. Key from TALP_KEY (the five hand-in runs only).
   fake       No network: a canned answer, for checking the pipeline.
 
+Answers are cached on disk (CACHE_DIR, default .cache/) by model, seed and prompt: a rerun with the same seed
+and prompts is free and instant; a changed persona or message only asks again where its prompts changed.
 Keys are never printed or written. If SPEND_LOG is set, every real call appends one tab-separated line
 (time, agent, model, input tokens, output tokens, usd, tag) to it.
 """
+import hashlib
+import json
 import os
 import random
 import time
@@ -57,9 +61,24 @@ def _fake(prompt, seed):
 
 
 def ask(prompt, seed, model, max_tokens=400, tag=""):
-    """Return the model's text for one prompt."""
+    """Return the model's text for one prompt (cached; `tag` only labels the spend log)."""
     if model == "fake":
         return _fake(prompt, seed)
+    key = hashlib.sha256(json.dumps([model, seed, max_tokens, prompt]).encode()).hexdigest()
+    path = os.path.join(os.environ.get("CACHE_DIR", os.path.join(os.path.dirname(__file__), ".cache")), key[:2], key)
+    if os.path.exists(path):
+        with open(path) as f:
+            return f.read()
+    text = _ask(prompt, seed, model, max_tokens, tag)
+    if text.strip():
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path + ".tmp", "w") as f:
+            f.write(text)
+        os.replace(path + ".tmp", path)
+    return text
+
+
+def _ask(prompt, seed, model, max_tokens, tag):
     for attempt in range(RETRIES + 1):
         try:
             if model.startswith("claude"):

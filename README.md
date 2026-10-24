@@ -27,6 +27,10 @@ python sim.py --type plan --seed 1 --limit 4       # quick test, four personas
 python sim.py --type plan --seed 1 --model fake    # no network, checks the pipeline
 ```
 
+Each persona runs its ten weeks in its own thread (personas do not see each other): a full run with
+check-ins takes about 30 s on Haiku. Answers are cached in `.cache/` by model, seed and prompt, so a rerun is
+instant and a changed persona only asks again where its prompts changed.
+
 Hand-in runs use Gemini: `export TALP_KEY=...` and `--model gemini-3.5-flash-lite`. Keys stay in the environment,
 never in code or runs. `SPEND_LOG=<file>` appends one line per real call (model, tokens, $).
 

@@ -183,23 +183,22 @@ class Run:
         with ThreadPoolExecutor(self.a.workers) as ex:
             return list(ex.map(lambda p: fn(p, *args), self.personas))
 
+    def persona_run(self, p):
+        """One persona's whole run. Personas do not see each other, so they run side by side."""
+        rows = self.persona_checkin(p, "start") if self.a.probe else []
+        for week in range(1, 11):
+            self.history[p["id"]].append(self.persona_week(p, week))
+        if self.a.probe:
+            rows += self.persona_checkin(p, "end")
+        print(f"{p['id']} done: {self.history[p['id']][-1]['status']}", flush=True)
+        return rows
+
     def go(self):
         if self.out.exists():
             shutil.rmtree(self.out)
         self.out.mkdir(parents=True)
-        if self.a.probe:
-            self.probe += sum(self.each(self.persona_checkin, "start"), [])
-        for week in range(1, 11):
-            rows = self.each(self.persona_week, week)
-            for r in rows:
-                self.history[r["persona"]].append(r)
-            self.weekly += rows
-            counts = {}
-            for r in rows:
-                counts[r["status"]] = counts.get(r["status"], 0) + 1
-            print(f"week {week}: {counts}", flush=True)
-        if self.a.probe:
-            self.probe += sum(self.each(self.persona_checkin, "end"), [])
+        self.probe = sum(self.each(self.persona_run), [])
+        self.weekly = sorted((r for h in self.history.values() for r in h), key=lambda r: (r["week"], r["persona"]))
         self.save()
 
     def save(self):
@@ -226,7 +225,7 @@ def main():
     ap.add_argument("--model", default="claude-haiku-5-5")
     ap.add_argument("--probe", action="store_true", help="ask the eight check-in questions before week 1 and after week 10")
     ap.add_argument("--limit", type=int, help="only the first N personas (quick test)")
-    ap.add_argument("--workers", type=int, default=12)
+    ap.add_argument("--workers", type=int, default=36)
     ap.add_argument("--out")
     Run(ap.parse_args()).go()
 
