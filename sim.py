@@ -214,6 +214,9 @@ class Run:
         run = {"company": CFG["company"], "type": self.a.type, "seed": self.a.seed, "model": self.a.model,
                "decisions": self.decisions, "announcements": [n.get("id", n["title"]) for n in self.news]}
         (self.out / "run.json").write_text(json.dumps(run, indent=2, ensure_ascii=False) + "\n")   # last: marks a finished run
+        st = llm.STATS
+        print(f"model calls {st['calls']} (cached {len(self.calls) - st['calls']}), errors {st['errors']} (429: {st['429']}), "
+              f"${st['usd']:.4f}, {st['seconds'] / max(st['calls'], 1):.2f} s per call")
         print(f"{self.out}: {len(self.calls)} calls, metrics {json.dumps({k: v for k, v in m.items() if k != 'units'})}")
 
 

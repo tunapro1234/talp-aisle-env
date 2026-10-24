@@ -13,10 +13,13 @@ import hashlib
 import json
 import os
 import random
+import threading
 import time
 from datetime import datetime
 
-PRICE = {"claude-haiku-5-5": (0.10, 0.50), "claude-sonnet-5-5": (2.0, 10.0)}   # $ per 1M tokens in, out
+PRICE = {"claude-haiku-5-5": (0.10, 0.50), "claude-sonnet-5-5": (2.0, 10.0),   # $ per 1M tokens in, out
+         # TALP Vertex models: organiser credit, price not published; flash-lite / flash class assumed
+         "gemini-3.5-flash-lite": (0.10, 0.40), "gemini-3.1-flash-lite": (0.10, 0.40), "gemini-3.5-flash": (0.30, 2.50)}
 RETRIES = 4
 
 
@@ -31,22 +34,26 @@ def _claude_client():
     return Anthropic(api_key=key, max_retries=RETRIES)
 
 
-def _gemini_client():
+def _gemini_client():   # SDK retries off: ask() retries, so 429s are counted
     from google import genai
     from google.genai import types
     return genai.Client(vertexai=True, api_key=os.environ["TALP_KEY"],
-                        http_options=types.HttpOptions(retry_options=types.HttpRetryOptions(attempts=RETRIES + 1)))
+                        http_options=types.HttpOptions(retry_options=types.HttpRetryOptions(attempts=1)))
 
 
 _clients = {}
+STATS = {"calls": 0, "seconds": 0.0, "usd": 0.0, "errors": 0, "429": 0}   # real calls in this process
+_lock = threading.Lock()
 
 
 def _log(model, tin, tout, tag):
     path = os.environ.get("SPEND_LOG")
-    if not path:
-        return
     pin, pout = PRICE.get(model.split("/")[-1], (0, 0))
     usd = (tin * pin + tout * pout) / 1e6
+    with _lock:
+        STATS["usd"] += usd
+    if not path:
+        return
     stamp = datetime.now().astimezone().strftime("%Y-%m-%dT%H:%M:%S%z")
     with open(path, "a") as f:
         f.write(f"{stamp}\t{os.environ.get('SPEND_AGENT', 'talp-aisle-env')}\t{model}\t{tin}\t{tout}\t{usd:.6f}\t{tag}\n")
@@ -69,7 +76,11 @@ def ask(prompt, seed, model, max_tokens=400, tag=""):
     if os.path.exists(path):
         with open(path) as f:
             return f.read()
+    t0 = time.time()
     text = _ask(prompt, seed, model, max_tokens, tag)
+    with _lock:
+        STATS["calls"] += 1
+        STATS["seconds"] += time.time() - t0
     if text.strip():
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path + ".tmp", "w") as f:
@@ -99,6 +110,9 @@ def _ask(prompt, seed, model, max_tokens, tag):
         except SystemExit:
             raise
         except Exception as e:                      # network / overload: wait and try again
+            with _lock:
+                STATS["errors"] += 1
+                STATS["429"] += "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e)
             if attempt == RETRIES:
                 raise
             print(f"retry {attempt + 1} ({type(e).__name__})", flush=True)
