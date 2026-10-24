@@ -78,6 +78,17 @@ def test_team_decision_files():
     return len(files)
 
 
+def test_announcement_audience():
+    from sim import hears, load_jsonl
+    people = load_jsonl("personas.jsonl")
+    reach = lambda aud: sorted(p["id"] for p in people if hears({"audience": aud} if aud else {}, p))
+    assert reach(None) == reach("everyone") == sorted(p["id"] for p in people)
+    assert reach("small sellers") == [f"SS0{i}" for i in range(1, 9)]
+    assert reach("sellers") == sorted(p["id"] for p in people if p["group"] != "shoppers")
+    assert reach(["S03", "LS02"]) == ["LS02", "S03"]
+    assert reach({"trait": "where they hear news", "contains": ["tiktok", "Instagram"]}) == ["S03", "S05", "S07", "S15", "S16", "S18", "S19"]
+
+
 def test_same_inputs_same_world():
     out = []
     for n in (1, 2):

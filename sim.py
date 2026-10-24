@@ -40,6 +40,40 @@ def targets(target, group):
     return "sellers" in t and group in SELLER_GROUPS and not any(g.split()[0] in t for g in SELLER_GROUPS)
 
 
+def hears(item, p):
+    """Does an announcement reach this persona? Its "audience": missing or 'everyone', a group name or 'sellers'
+    (as a decision's target), a list of persona ids, or {"trait": key, "contains": text or [texts, any one]}."""
+    aud = item.get("audience", "everyone")
+    if isinstance(aud, list):
+        return p["id"] in aud
+    if isinstance(aud, dict):
+        have = str(p["traits"].get(aud["trait"], "")).lower()
+        words = aud["contains"] if isinstance(aud["contains"], list) else [aud["contains"]]
+        return any(w.lower() in have for w in words)
+    return targets(aud, p["group"])
+
+
+STAY = {"shoppers": "buys as usual", "small sellers": "active", "large sellers": "active"}
+
+
+def word_of_mouth(p, rows, seed):
+    """--wom on: one line on the persona's own group last week, from last week's rows, and at most two notes
+    of others in the group (order fixed by seed, week and persona). No LLM."""
+    others = [r for r in rows if r["group"] == p["group"] and r["persona"] != p["id"]]
+    if not others:
+        return []
+    counts = {}
+    for r in others:
+        if r["status"] != STAY[p["group"]]:
+            counts[r["status"]] = counts.get(r["status"], 0) + 1
+    moves = ", ".join(f"{n} {st}" for st, n in sorted(counts.items(), key=lambda x: CFG["statuses"][p["group"]].index(x[0])))
+    lines = [f"- Among other {p['group']} you know, last week: "
+             + (f"{moves} (of {len(others)})." if moves else f"all {len(others)} carried on as usual.")]
+    key = lambda r: hashlib.sha256(f"{seed}|{r['week']}|{p['id']}|{r['persona']}".encode()).hexdigest()
+    notes = [r["note"] for r in sorted(others, key=key) if r.get("note")][:2]
+    return lines + [f"- One of them wrote: \"{n[:120]}\"" for n in notes]
+
+
 def persona_block(p):
     if p["group"] == "shoppers":
         head = f"You are {p['name']}, a shopper on Aisle."
@@ -67,8 +101,8 @@ def world_lines(week, decisions, news, group):
     return seen, doing, told
 
 
-def week_prompt(p, week, history, decisions, news, delivery):
-    seen, doing, told = world_lines(week, decisions, news, p["group"])
+def week_prompt(p, week, history, decisions, news, delivery, wom=None):
+    seen, doing, told = world_lines(week, decisions, [a for a in news if hears(a, p)], p["group"])
     carrier = p["traits"].get("ships mostly with")
     seen += [f"- {delivery['terms']}", f"- {'You ship with ' + carrier + '. ' if carrier else ''}{delivery['parcels']}"]
     options = CFG["statuses"][p["group"]]
@@ -88,7 +122,7 @@ What Aisle is doing:
 {chr(10).join(doing)}
 Messages Aisle sent you:
 {chr(10).join(told) or '- none'}
-Your last weeks:
+{"What people around you say:" + chr(10) + chr(10).join(wom) + chr(10) if wom else ""}Your last weeks:
 {past}
 
 Decide what you do this week, as yourself. Write two or three sentences in your own voice, then end with exactly these lines:
@@ -145,7 +179,7 @@ def checkin_prompt(p, when, history, decisions, news):
     if when == "start":
         ctx = "It is November 1, before the ten weeks start."
     else:
-        _, _, told = world_lines(10, decisions, news, p["group"])
+        _, _, told = world_lines(10, decisions, [a for a in news if hears(a, p)], p["group"])
         weeks = "\n".join(f"- Week {h['week']}: {h['status']}. {h.get('note', '')}" for h in history)
         ctx = f"It is January 11; the ten weeks are over. Your weeks:\n{weeks}\nMessages Aisle sent you:\n" \
               f"{chr(10).join(told) or '- none'}"
@@ -185,8 +219,9 @@ class Run:
                            "model": self.a.model})
         return cid, text
 
-    def persona_week(self, p, week, delivery):
-        prompt = week_prompt(p, week, self.history[p["id"]], self.decisions, self.news, delivery)
+    def persona_week(self, p, week, delivery, last):
+        wom = word_of_mouth(p, last, self.a.seed) if self.a.wom == "on" else None
+        prompt = week_prompt(p, week, self.history[p["id"]], self.decisions, self.news, delivery, wom)
         for attempt in range(3):
             cid, text = self.call(p["id"], week, prompt, attempt)
             row = parse_week(text, p["group"])
@@ -233,7 +268,9 @@ class Run:
         self.world.row(0, [], self.personas)
         for week in range(1, 11):                 # the world links personas, so weeks run in order
             delivery = self.world.begin(week)
-            rows = self.each(self.persona_week, week, delivery)
+            group = {p["id"]: p["group"] for p in self.personas}
+            last = [{**r, "group": group[r["persona"]]} for r in self.weekly if r["week"] == week - 1]
+            rows = self.each(self.persona_week, week, delivery, last)
             for r in rows:
                 self.history[r["persona"]].append(r)
             self.weekly += rows
@@ -256,7 +293,7 @@ class Run:
             m["probe_missing"] = sum(len(ids) for ids in self.probe_missing.values())
         (self.out / "metrics.json").write_text(json.dumps(m, indent=2) + "\n")
         run = {"company": CFG["company"], "type": self.a.type, "seed": self.a.seed, "model": self.a.model,
-               "decisions": self.locked, "probe": self.a.probe, "probe_eksik": {w: sorted(ids) for w, ids in self.probe_missing.items()},
+               "decisions": self.locked, "probe": self.a.probe, "wom": self.a.wom, "probe_eksik": {w: sorted(ids) for w, ids in self.probe_missing.items()},
                "announcements": {"file": "announcements.json", "n": len(self.all_news), "ids": [n.get("id") for n in self.all_news],
                                  "sha256": sha(HERE / "announcements.json"), "used": [n.get("id") for n in self.news]},
                "decisions_file": None if self.a.type == "nodecision" else
@@ -280,6 +317,8 @@ def main():
     ap.add_argument("--workers", type=int, default=36)
     ap.add_argument("--out")
     ap.add_argument("--bind", choices=("on", "off"), default="on", help="orders follow the status (bind_orders); off: as the model said")
+    ap.add_argument("--wom", choices=("on", "off"), default="off",
+                    help="word of mouth: from week 2 each persona hears how its group did last week, and two of their notes")
     ap.add_argument("--strike", choices=("on", "off"), help="test: Rapid Parcel strike on / off from week 5 (default: announcements decide)")
     Run(ap.parse_args()).go()
 

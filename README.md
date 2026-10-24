@@ -19,7 +19,7 @@ reads what it can see and the model writes what it does and its status. Output i
 | `personas.jsonl` | personas: `id`, `group`, `name`, `weight`, `traits`, `story` |
 | `decisions/plan.json` | an example plan (decision 1 has three actions); `decisions/none.json` is empty |
 | `decisions/locked.json` | the team's locked decision 1 (week 5: extra capacity, faster payouts, ads; $1.1M), word for word |
-| `announcements.json` | crises announced on the dashboard: `[{"id", "week", "title", "text", "surprise": true}]` |
+| `announcements.json` | crises announced on the dashboard: `[{"id", "week", "title", "text", "surprise": true}]`; optional `"audience"` (below) |
 
 ## Run
 
@@ -74,10 +74,14 @@ so weeks 1-3 together match it (`sales_usd`; the unscaled figure is `sales_raw_u
 - its traits and a short story;
 - the known crisis (Rapid Parcel strike warning) and every announcement up to week N
   (`plan_nosurprises` drops those with `"surprise": true`);
+  an announcement with `"audience"` reaches only: `"everyone"` (default), `"shoppers"`, `"small sellers"`, `"large sellers"`, `"sellers"`,
+  a list of persona ids, or `{"trait": "where they hear news", "contains": "TikTok"}` (text or list, any one, case ignored);
 - what Aisle is doing: each locked action for its duration, or business as usual;
 - Aisle's messages, word for word, only if the decision's target reaches its group
   (`everyone`, `shoppers`, `sellers`, `small sellers`, `large sellers`);
 - Aisle's terms this week and parcel speed by carrier (from the world layer);
+- with `--wom on` (default off), from week 2: one line on how the others in its group did last week
+  (e.g. `3 paused, 1 moved to a rival (of 19)`) and at most two of their notes, picked by seed; no LLM. `run.json` records `"wom"`;
 - its own last three weeks (status and a one-line note it wrote).
 
 It answers in its own words and ends with `Orders`, `Returned` (shoppers) or `Sales` (sellers), `Complained`,
