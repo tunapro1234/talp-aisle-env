@@ -26,6 +26,16 @@ DECEMBER = {True: "you keep ordering through December, about 1.1 times your norm
                   "in early January about your normal week",
             False: "your sales run about 1.1 times a normal week through December, Christmas week too; "
                    "about a normal week in early January"}
+# G>=6 (from Utku's env G, 24 Oct): one line on the season in the weeks it matters, by group
+WEEK_EVENT = {
+    4: {True: "Black Friday week: every big retailer, online and in stores, is running Black Friday deals.",
+        False: "Black Friday week: orders on Aisle are about 2.5 times a normal week; most of them ship next week, in Cyber Monday week."},
+    5: {True: "Cyber Monday week: the deals continue online.",
+        False: "Cyber Monday week: you are shipping most of the Black Friday orders this week, on top of Cyber Monday orders."},
+    8: {True: "Christmas week: last-minute gifts must arrive before December 25.",
+        False: "Christmas week: buyers want parcels before December 25; after Christmas the returns start."},
+    9: {True: "New Year week: many people return holiday gifts this week and next.",
+        False: "New Year week: holiday returns usually peak now and in the first week of January."}}
 SEASON = {True: "in each of these two weeks you usually order about 1.4 times your normal week",
           False: "in each of these two weeks your sales usually run about 1.4 times a normal week"}
 CFG = json.loads((HERE / "aisle.json").read_text())
@@ -91,7 +101,7 @@ def persona_block(p):
     return f"{head}\n{traits}\n{p['story']}"
 
 
-G = 0   # talp-persona-new Gemini iterations (cumulative): 1 fact line, 2 returns cap, 3 season line, 4 message window
+G = 0   # talp-persona-new Gemini iterations (cumulative): 1 fact line, 2 returns cap, 3 season line, 4 message window, 6 week event line (Utku G)
 
 
 def world_lines(week, decisions, news, group, window=False):
@@ -125,6 +135,8 @@ def week_prompt(p, week, history, decisions, news, delivery, wom=None):
     seen, doing, told = world_lines(week, decisions, [a for a in news if hears(a, p)], p["group"], window=G >= 4)
     carrier = p["traits"].get("ships mostly with")
     seen += [f"- {delivery['terms']}", f"- {'You ship with ' + carrier + '. ' if carrier else ''}{delivery['parcels']}"]
+    if G >= 6 and week in WEEK_EVENT:
+        seen.append("- " + WEEK_EVENT[week][p["group"] == "shoppers"])
     options = CFG["statuses"][p["group"]]
     past = "\n".join(f"- Week {h['week']}: {h['status']}. {h.get('note', '')}" for h in history[-3:]) or "- (first week)"
     if G >= 1:
@@ -362,7 +374,7 @@ def main():
     ap.add_argument("--bind", choices=("on", "off"), default="on", help="orders follow the status (bind_orders); off: as the model said")
     ap.add_argument("--wom", choices=("on", "off"), default="off",
                     help="word of mouth: from week 2 each persona hears how its group did last week, and two of their notes")
-    ap.add_argument("--g", type=int, default=5, help="talp-persona-new Gemini iteration 0-5 (cumulative; 5 = hand-in setting, 0 = off)")
+    ap.add_argument("--g", type=int, default=5, help="talp-persona-new Gemini iteration 0-6 (cumulative; 5 = hand-in setting, 6 adds week event lines, 0 = off)")
     ap.add_argument("--strike", choices=("on", "off"), help="test: Rapid Parcel strike on / off from week 5 (default: announcements decide)")
     a = ap.parse_args()
     global G
