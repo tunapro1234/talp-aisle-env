@@ -34,5 +34,14 @@
     "text": "Overnight, Congress missed its funding deadline, and parts of the federal government shut down. Some federal workers have been sent home; others, such as air traffic controllers and TSA officers, must keep working without pay. Nobody knows how long it will last. Known: Social Security payments and the Postal Service continue. Not known: how long it will last; when federal workers will be paid; which services will slow down. Federal workers and contractors are a small share of Aisle's buyers, larger around Washington, D.C. Some sellers were waiting for Small Business Administration loans, which are now paused.",
     "surprise": true,
     "source": "dashboard, Government shutdown, week 7, published 24 Oct 16:00"
+  },
+  {
+    "id": "w8-shutdown-update",
+    "update_of": "w7-shutdown",
+    "week": 8,
+    "title": "Government shutdown — update",
+    "text": "The Senate passed a short-term funding bill; the House plans to vote after Christmas. Federal workers have been told they will get back pay once the government reopens. Their December 30 paycheck may be missed.",
+    "surprise": true,
+    "source": "dashboard, Government shutdown — update, week 8, published 24 Oct 16:30"
   }
 ]
