@@ -128,6 +128,19 @@
     "kind": "fixed",
     "source": "ours: slower handling by managers and temporary drivers adds 2 days to Rapid Parcel's mid estimate while the strike is on."
   },
+  "seller_shift": {
+    "value": {
+      "per_extra_day": 0.1,
+      "max": 0.6
+    },
+    "kind": "weekly",
+    "source": "ours: while Rapid Parcel runs late, sellers move 10% of their Rapid Parcel parcels to Meridian and Dash per day of delay, up to 60%, within those carriers' 30% headroom. Anchor: in the 2024 Canada Post strike small firms moved parcels to private couriers until those reached capacity (CFIB, 2024). The locked week-5 message also tells sellers they can move parcels."
+  },
+  "rapid_days_max": {
+    "value": 14,
+    "kind": "fixed",
+    "source": "ours: a Rapid Parcel parcel takes at most about two weeks; what would wait longer is cancelled or re-shipped with another carrier and leaves the backlog. Not in the dossier; the team's cap (24 Oct)."
+  },
   "spare_capacity": {
     "value": 0,
     "kind": "decision",

@@ -104,6 +104,7 @@ class World:
         self.normal_parcels = W["plan_sales_month"] * 12 / 52 / W["avg_order"]
         self.rapid_share = W["carrier_share"]["Rapid Parcel"] / 100
         self.parcel_scale = None
+        self.strike_from = None
         self.rows = []
         self.policy(0)
 
@@ -148,18 +149,28 @@ class World:
         self.policy(week)
         s["budget_spent"] += sum(cost(a) for d in self.decisions if d["week"] == week for a in d["actions"])
         on = s["strike_state"] == "on"
-        s["rapid_cap"] = self.normal_parcels * self.rapid_share * W["carrier_headroom"] * (W["strike_capacity"] if on else 1)
+        if on and self.strike_from is None:
+            self.strike_from = week
         mid = sum(W["normal_days"]) / 2
-        s["rapid_days"] = round(mid + (W["strike_extra_days"] if on else 0) + 7 * s["backlog"] / s["rapid_cap"], 1)
+        # sellers move part of their new parcels to Meridian and Dash as last week's Rapid Parcel delay grows
+        late = (s["rapid_days"] or mid) - mid
+        sh = W["seller_shift"]
+        s["shift"] = min(sh["max"], sh["per_extra_day"] * max(0, late)) if on else 0.0
+        share = self.rapid_share * (1 - s["shift"])
+        s["rapid_cap"] = self.normal_parcels * self.rapid_share * W["carrier_headroom"] * (W["strike_capacity"] if on else 1)
+        days = mid + (W["strike_extra_days"] if on else 0) + 7 * s["backlog"] / s["rapid_cap"]
+        if on:      # no parcel can be later than the strike is old, nor (ours) later than the cap
+            days = min(days, mid + W["strike_extra_days"] + 7 * (week - self.strike_from), W["rapid_days_max"])
+        s["rapid_days"] = round(days, 1)
         free = "on every order" if s["free_ship_threshold"] == 0 else f"over ${s['free_ship_threshold']}"
         terms = (f"Aisle's terms this week: checkout says delivery in {s['checkout_promise']}; free shipping {free}; "
                  f"return shipping {s['return_shipping']}; complaints answered within {s['complaint_sla']}; "
                  f"fake-product claims {s['fake_claims']}; sellers paid {s['payout_freq']}.")
         strike = " (its drivers are on strike)" if on else ""
-        parcels = (f"Parcels this week: Rapid Parcel{strike}, which carries 45% of Aisle's orders, takes about "
+        parcels = (f"Parcels this week: Rapid Parcel{strike}, which carries {round(100 * share)}% of Aisle's orders this week, takes about "
                    f"{s['rapid_days']:g} days; Meridian and Dash about {mid:g} days.")
-        return {"terms": terms, "parcels": parcels,   # days: a shopper's parcel, 45% Rapid Parcel (talp-persona-new g1)
-                "days": round(self.rapid_share * s["rapid_days"] + (1 - self.rapid_share) * mid, 1)}
+        return {"terms": terms, "parcels": parcels,   # days: a shopper's parcel, Rapid Parcel's share of it (g1)
+                "days": round(share * s["rapid_days"] + (1 - share) * mid, 1)}
 
     def end(self, week, personas, rows):
         s, p = self.s, {x["id"]: x for x in personas}
@@ -167,9 +178,13 @@ class World:
         orders = sum(r["orders"] * p[r["persona"]]["weight"] for r in shop)
         if self.parcel_scale is None:      # ours: week 1's parcels equal the plan's; the ratio holds for the run
             self.parcel_scale = self.normal_parcels / max(orders, 1)
-        load = orders * self.parcel_scale * self.rapid_share + s["backlog"]
+        rapid = orders * self.parcel_scale * self.rapid_share
+        moved = min(rapid * s["shift"], self.normal_parcels * (1 - self.rapid_share) * (W["carrier_headroom"] - 1))
+        load = rapid - moved + s["backlog"]      # what sellers moved rides Meridian and Dash's own headroom
         spare = self.normal_parcels * (1 - self.rapid_share) * s["spare_capacity"]   # Meridian + Dash extra, takes Rapid's overflow
         s["backlog"] = max(0.0, load - s["rapid_cap"] - spare)
+        # ours: what would wait longer than rapid_days_max is cancelled or re-shipped and leaves the backlog
+        s["backlog"] = min(s["backlog"], s["rapid_cap"] * (W["rapid_days_max"] - sum(W["normal_days"]) / 2) / 7)
         self.row(week, rows, personas, sales=orders * W["avg_order"], orders=orders,
                  returns=sum(r["returns"] * p[r["persona"]]["weight"] for r in shop),
                  complaints=sum(p[r["persona"]]["weight"] for r in rows if r["complained"]))
