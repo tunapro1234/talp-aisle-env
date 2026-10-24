@@ -1,12 +1,14 @@
 """Persona behaviour -> the board's goals. Every persona counts for `weight` real people (or sellers).
 
-goal_1  shoppers' orders, weeks 4-10 mean per week, as % of weeks 1-3 mean (no Black Friday lift applied: the plan
-        expects more than 100%, so read it against the no-decision run, not against 95).
+goal_1  the board's goal 1: Aisle's sales in weeks 4-10 as % of the plan for those weeks (world.json plan). Sales are the
+        shoppers' weighted orders, scaled so weeks 1-3 match the plan, as in world_weekly.csv.
 goal_2  sellers active or reduced in week 10, % of all sellers (everyone was active on November 2).
 goal_3  orders sent back / orders placed, weeks 4-10, %. goal_3b: complaints per persona-week, weeks 4-10 as % of weeks 1-3
         (a 0.05 per persona-week prior, so a quiet weeks 1-3 does not divide by zero).
 goal_4  shoppers' trust (1a and 1b), end minus start, 1-5 scale; only with check-in answers.
 """
+
+from world import plan_usd
 
 
 def _wsum(rows, w, key):
@@ -21,7 +23,9 @@ def compute(personas, weekly, probe):
     sellers10 = [r for r in weekly if group[r["persona"]] != "shoppers" and r["week"] == 10]
     m = {}
     if early and late:
-        m["goal_1"] = round(100 * (_wsum(late, w, "orders") / 7) / max(_wsum(early, w, "orders") / 3, 1e-9), 1)
+        plan = lambda weeks: sum(plan_usd(k) for k in weeks)
+        m["goal_1"] = round(100 * _wsum(late, w, "orders") / max(_wsum(early, w, "orders"), 1e-9)
+                            * plan(range(1, 4)) / plan(range(4, 11)), 1)
         m["goal_3"] = round(100 * _wsum(late, w, "returns") / max(_wsum(late, w, "orders"), 1e-9), 1)
     if sellers10:
         ok = sum(w[r["persona"]] for r in sellers10 if r["status"] in ("active", "reduced"))
@@ -40,7 +44,7 @@ def compute(personas, weekly, probe):
         mean = lambda when: sum(sum(trust[when][k]) for k in both) / sum(len(trust[when][k]) for k in both)
         m["goal_4"] = round(mean("end") - mean("start"), 2)
     m["units"] = {
-        "goal_1": "shoppers' weekly orders, weeks 4-10 as % of weeks 1-3 (weighted; no plan lift)",
+        "goal_1": "sales in weeks 4-10 as % of the plan for weeks 4-10 (sales scaled so weeks 1-3 match the plan)",
         "goal_2": "% of sellers (weighted) active or reduced in week 10",
         "goal_3": "% of orders sent back, weeks 4-10 (weighted)",
         "goal_3b": "complaints per persona-week, weeks 4-10 as % of weeks 1-3",
