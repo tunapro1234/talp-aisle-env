@@ -15,5 +15,16 @@
     "text": "Aisle's own check: the sneakers in the video are fake and came from a small sneaker seller. Complaints since the video point to a few other sneaker and handbag sellers. Fewer than 20 sellers in total; all have been asked for invoices. Two other creators have shared the video.",
     "surprise": true,
     "source": "dashboard, Company update week 4, published 24 Oct 14:30"
+  },
+  {
+    "id": "w5-strike",
+    "week": 5,
+    "title": "Rapid Parcel drivers walk out",
+    "text": "Contract talks at Rapid Parcel failed. Drivers walked out on Tuesday, December 1. Rapid Parcel is delivering with managers and temporary drivers and says its parcels will take \"several extra days\". It cannot say for how long.",
+    "surprise": false,
+    "set": {
+      "strike_state": "on"
+    },
+    "source": "dashboard, Known crisis week 5, published 24 Oct 15:00"
   }
 ]
