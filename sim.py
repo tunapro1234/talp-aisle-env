@@ -96,7 +96,8 @@ G = 0   # talp-persona-new Gemini iterations (cumulative): 1 fact line, 2 return
 
 def world_lines(week, decisions, news, group, window=False):
     """What a persona of this group can see in this week."""
-    seen = [f"- {CFG['known_crisis']['text']}"] if week >= CFG["known_crisis"]["from_week"] else []
+    struck = any("strike_state" in a.get("set", {}) for a in news if a["week"] <= week)   # the warning gives way to the news
+    seen = [f"- {CFG['known_crisis']['text']}"] if week >= CFG["known_crisis"]["from_week"] and not struck else []
     seen += [f"- Week {a['week']}: {a['title']}. {a['text']}" for a in news if a["week"] <= week]
     doing, told = [], []
     for d in decisions:
