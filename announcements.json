@@ -26,5 +26,13 @@
       "strike_state": "on"
     },
     "source": "dashboard, Known crisis week 5, published 24 Oct 15:00"
+  },
+  {
+    "id": "w7-shutdown",
+    "week": 7,
+    "title": "Government shutdown",
+    "text": "Overnight, Congress missed its funding deadline, and parts of the federal government shut down. Some federal workers have been sent home; others, such as air traffic controllers and TSA officers, must keep working without pay. Nobody knows how long it will last. Known: Social Security payments and the Postal Service continue. Not known: how long it will last; when federal workers will be paid; which services will slow down. Federal workers and contractors are a small share of Aisle's buyers, larger around Washington, D.C. Some sellers were waiting for Small Business Administration loans, which are now paused.",
+    "surprise": true,
+    "source": "dashboard, Government shutdown, week 7, published 24 Oct 16:00"
   }
 ]

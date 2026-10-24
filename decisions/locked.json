@@ -23,5 +23,30 @@
    "social media"
   ],
   "why": "Most Black Friday and Cyber Monday orders ship in week 5, when the Rapid Parcel strike may begin; 40% more room at Meridian and Dash lets sellers move parcels off Rapid Parcel in weeks 5-6.\nSellers stocked up for the holidays and many run on tight cash; paying them twice a week for six weeks keeps them selling through a slow December.\nA small ad push keeps shoppers coming back after Cyber Monday; at $1.1M it leaves $1.4M and our second decision for what we cannot see yet."
+ },
+ {
+  "week": 7,
+  "target": "everyone: shoppers, small sellers and large sellers",
+  "actions": [
+   {
+    "action": "Extra capacity from Meridian and Dash for 2 weeks",
+    "level": "+20%"
+   },
+   {
+    "action": "Extra support staff for 4 weeks (+100)",
+    "level": "on"
+   },
+   {
+    "action": "Free return shipping for 4 weeks",
+    "level": "on"
+   }
+  ],
+  "message": "Some parcels are still arriving late because of the Rapid Parcel strike. For the next two weeks we have added more delivery capacity with Meridian and Dash. For the next four weeks, return shipping on Aisle is free, and 100 more support staff answer your questions faster. Sellers: you can keep moving parcels to Meridian and Dash, and Aisle pays the return shipping.",
+  "channels": [
+   "email",
+   "in-app banner",
+   "social media"
+  ],
+  "why": "The strike has no end date and our week-5 delivery capacity ends after week 6; 20% more room at Meridian and Dash for weeks 7-8 keeps Christmas parcels moving.\nLate parcels turn into questions and returns; 100 more support staff and free return shipping for weeks 7-10 take the waiting and the cost out of a late gift.\nBoth decisions total $2.05M of $2.5M; we watch the return rate, since free returns can raise it."
  }
 ]
