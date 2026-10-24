@@ -18,6 +18,7 @@ reads what it can see and the model writes what it does and its status. Output i
 | `aisle.json` | the dossier as data: statuses, weeks, known crisis, business as usual, action texts, check-in questions |
 | `personas.jsonl` | personas: `id`, `group`, `name`, `weight`, `traits`, `story` |
 | `decisions/plan.json` | an example plan (decision 1 has three actions); `decisions/none.json` is empty |
+| `decisions/locked.json` | the team's locked decision 1 (week 5: extra capacity, faster payouts, ads; $1.1M), word for word |
 | `announcements.json` | crises announced on the dashboard: `[{"id", "week", "title", "text", "surprise": true}]` |
 
 ## Run
