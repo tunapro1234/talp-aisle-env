@@ -116,8 +116,8 @@ def world_lines(week, decisions, news, group, window=False):
 def fact(p, h):
     """G>=1: one sentence the env computes from last week's row, in place of the persona's own notes."""
     if p["group"] == "shoppers":
-        return (f"- Last week you placed {h['orders']} orders, returned {h['returns']}, your parcels took about "
-                f"{h['days']:g} days; your status was {h['status']}.")
+        took = f", your parcels took about {h['days']:g} days" if h["orders"] else ""   # no order, no parcel to wait for
+        return f"- Last week you placed {h['orders']} orders, returned {h['returns']}{took}; your status was {h['status']}."
     return f"- Last week your sales on Aisle were ${h['sales_usd']:,}; your status was {h['status']}."
 
 
