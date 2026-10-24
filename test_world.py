@@ -89,6 +89,21 @@ def test_announcement_audience():
     assert reach({"trait": "where they hear news", "contains": ["tiktok", "Instagram"]}) == ["S03", "S05", "S07", "S15", "S16", "S18", "S19"]
 
 
+def test_strike_deal():
+    """Week 7's deal: part of week 7 on strike, week 8 clears the backlog, normal days after."""
+    news = [{"week": 5, "set": {"strike_state": "on"}}, {"week": 7, "set": {"strike_state": "ending"}}]
+    w = World([], news)
+    rows = [{"persona": "S", "orders": 1, "returns": 0, "complained": False, "status": "buys as usual"}]
+    people = [{"id": "S", "group": "shoppers", "weight": 1}]
+    for week in range(1, 11):
+        w.begin(week)
+        w.end(week, people, rows)
+    r = {x["week"]: x for x in w.rows}
+    assert [r[k]["strike_state"] for k in (6, 7, 8, 10)] == ["on", "ending", "over", "over"], r
+    assert r[7]["backlog_parcels"] > 0 and r[8]["backlog_parcels"] == 0, (r[7], r[8])
+    assert r[10]["rapid_days"] == sum(W["normal_days"]) / 2, r[10]
+
+
 def test_same_inputs_same_world():
     out = []
     for n in (1, 2):

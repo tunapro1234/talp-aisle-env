@@ -105,6 +105,7 @@ class World:
         self.rapid_share = W["carrier_share"]["Rapid Parcel"] / 100
         self.parcel_scale = None
         self.strike_from = None
+        self.cleared = False
         self.rows = []
         self.policy(0)
 
@@ -141,6 +142,8 @@ class World:
     def begin(self, week):
         """This week's state; returns {"terms": ..., "parcels": ...}, the sentences every persona reads."""
         s = self.s
+        if s["strike_state"] == "ending":      # the week after the deal: drivers back for the whole week
+            s["strike_state"] = "over"
         for n in self.news:
             if n["week"] == week and "strike_state" in n.get("set", {}):
                 s["strike_state"] = n["set"]["strike_state"]
@@ -148,7 +151,8 @@ class World:
             s["strike_state"] = "on" if self.strike == "on" else "none"
         self.policy(week)
         s["budget_spent"] += sum(cost(a) for d in self.decisions if d["week"] == week for a in d["actions"])
-        on = s["strike_state"] == "on"
+        # the share of this week Rapid Parcel's drivers are out: all of it, or the days before the deal
+        on = {"on": 1.0, "ending": W["strike_deal_week_share"]}.get(s["strike_state"], 0.0)
         if on and self.strike_from is None:
             self.strike_from = week
         mid = sum(W["normal_days"]) / 2
@@ -157,8 +161,11 @@ class World:
         sh = W["seller_shift"]
         s["shift"] = min(sh["max"], sh["per_extra_day"] * max(0, late)) if on else 0.0
         share = self.rapid_share * (1 - s["shift"])
-        s["rapid_cap"] = self.normal_parcels * self.rapid_share * W["carrier_headroom"] * (W["strike_capacity"] if on else 1)
-        days = mid + (W["strike_extra_days"] if on else 0) + 7 * s["backlog"] / s["rapid_cap"]
+        s["rapid_cap"] = self.normal_parcels * self.rapid_share * W["carrier_headroom"] * (1 - on * (1 - W["strike_capacity"]))
+        if s["strike_state"] == "over" and not self.cleared:      # Rapid Parcel clears what waited, the week after the deal
+            s["rapid_cap"] += s["backlog"] / W["deal_clear_weeks"]
+            self.cleared = True
+        days = mid + on * W["strike_extra_days"] + 7 * s["backlog"] / s["rapid_cap"]
         if on:      # no parcel can be later than the strike is old, nor (ours) later than the cap
             days = min(days, mid + W["strike_extra_days"] + 7 * (week - self.strike_from), W["rapid_days_max"])
         s["rapid_days"] = round(days, 1)
@@ -166,7 +173,7 @@ class World:
         terms = (f"Aisle's terms this week: checkout says delivery in {s['checkout_promise']}; free shipping {free}; "
                  f"return shipping {s['return_shipping']}; complaints answered within {s['complaint_sla']}; "
                  f"fake-product claims {s['fake_claims']}; sellers paid {s['payout_freq']}.")
-        strike = " (its drivers are on strike)" if on else ""
+        strike = {"on": " (its drivers are on strike)", "ending": " (its drivers went back to work on December 17)"}.get(s["strike_state"], "")
         parcels = (f"Parcels this week: Rapid Parcel{strike}, which carries {round(100 * share)}% of Aisle's orders this week, takes about "
                    f"{s['rapid_days']:g} days; Meridian and Dash about {mid:g} days.")
         return {"terms": terms, "parcels": parcels,   # days: a shopper's parcel, Rapid Parcel's share of it (g1)

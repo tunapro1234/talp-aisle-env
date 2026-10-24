@@ -116,7 +116,7 @@
   "strike_state": {
     "value": "possible",
     "kind": "weekly",
-    "source": "From week 5 (Tuesday, December 1): a possible strike at Rapid Parcel. Changes only through an announcement ({\"set\": {\"strike_state\": \"on\"}}) or --strike on|off."
+    "source": "From week 5 (Tuesday, December 1): a possible strike at Rapid Parcel. Changes only through an announcement ({\"set\": {\"strike_state\": \"on\"}}, \"ending\" in the week of the deal, then \"over\") or --strike on|off."
   },
   "strike_capacity": {
     "value": 0.5,
@@ -127,6 +127,16 @@
     "value": 2,
     "kind": "fixed",
     "source": "ours: slower handling by managers and temporary drivers adds 2 days to Rapid Parcel's mid estimate while the strike is on."
+  },
+  "strike_deal_week_share": {
+    "value": 0.286,
+    "kind": "fixed",
+    "source": "Dashboard, known crisis week 7: 'Rapid Parcel and the union reached a deal on December 17.' Week 7 runs Tuesday, December 15 to Monday, December 21 (week 5 starts Tuesday, December 1), so the drivers are out 2 of its 7 days: capacity, extra days and the delay cap count 2/7 of the strike; from week 8 the strike is over."
+  },
+  "deal_clear_weeks": {
+    "value": 1,
+    "kind": "fixed",
+    "source": "Dashboard, known crisis week 7: 'Rapid Parcel expects to clear its backlog before Christmas.' Christmas falls in week 8 (December 22-28); ours: we take Rapid Parcel at its word and add the waiting parcels to its week-8 capacity, so the backlog is gone by the end of week 8."
   },
   "seller_shift": {
     "value": {

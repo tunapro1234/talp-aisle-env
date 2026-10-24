@@ -41,7 +41,7 @@ def load(folder):
     return {"name": f.name, "rows": rows, "run": run, "folder": f,
             "metrics": json.loads((f / "metrics.json").read_text()) if (f / "metrics.json").exists() else {},
             "dweeks": sorted({d["week"] for d in run.get("decisions", [])}),
-            "strike": [int(r["week"]) for r in rows if r["strike_state"] == "on"]}
+            "strike": [int(r["week"]) for r in rows if r["strike_state"] in ("on", "ending")]}
 
 
 def money(v):

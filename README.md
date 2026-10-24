@@ -65,7 +65,8 @@ Before each week: decisions in force set the variables, the budget is spent in t
 moves (`announcements.json` `"set": {"strike_state": "on"}`, or `--strike on|off` for tests). Every persona
 reads Aisle's terms and how fast parcels move. After the week: orders x weight x $60 = sales; Rapid Parcel
 ships what its capacity allows (half while on strike), extra capacity takes the rest, what is left waits as
-backlog and lengthens next week's delivery. While Rapid Parcel runs late, sellers move part of their new parcels to Meridian
+backlog and lengthens next week's delivery. The week-7 announcement ends the strike on December 17 (`"ending"`: 2 of week 7's
+7 days on strike, `strike_deal_week_share`); in week 8 Rapid Parcel clears what waited (`deal_clear_weeks`) and is back to normal. While Rapid Parcel runs late, sellers move part of their new parcels to Meridian
 and Dash (`seller_shift`); no parcel is later than the strike is old, nor than `rapid_days_max` (14). One row per week in `runs/<name>/world_weekly.csv`.
 Personas' own order counts run high, so parcel counts are scaled so week 1 matches the plan, and sales
 so weeks 1-3 together match it (`sales_usd`; the unscaled figure is `sales_raw_usd`). Goals are ratios and do not change.
