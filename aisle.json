@@ -22,11 +22,6 @@
       "left"
     ]
   },
-  "business_as_usual": [
-    "The delivery estimate at checkout says \"2-4 days\".",
-    "Complaints are answered within 48 hours; claims that a product is fake go to the seller first.",
-    "Sellers choose their own carrier from the three."
-  ],
   "weeks": {
     "1": "Nov 2-8",
     "2": "Nov 9-15",
@@ -56,7 +51,7 @@
   "actions": {
     "discount": {
       "weeks": 1,
-      "text": "Aisle pays a {level} discount on one category this week"
+      "text": "Aisle pays a {level} discount on {category} this week"
     },
     "free_shipping": {
       "weeks": 2,

@@ -1,0 +1,219 @@
+{
+  "_about": "Company variables for the world layer. kind: fixed (does not change), decision (changed only by a decision), weekly (changes every week). source: the dossier sentence word for word (11-aisle.md), or 'ours: <reason>'.",
+  "budget_total": {
+    "value": 2500000,
+    "kind": "fixed",
+    "source": "Decision menu (budget: $2.5 million for both decisions)"
+  },
+  "action_cost": {
+    "value": {
+      "discount": {
+        "5%": 600000,
+        "10%": 1200000
+      },
+      "free_shipping": {
+        "$25": 250000,
+        "no minimum": 550000
+      },
+      "extra_capacity": {
+        "+20%": 400000,
+        "+40%": 800000
+      },
+      "delivery_promise": {
+        "4-7 days": 0,
+        "on time or a $5 credit": 200000
+      },
+      "seller_check": {
+        "on": 150000
+      },
+      "authenticity_guarantee": {
+        "on": 200000
+      },
+      "free_returns": {
+        "on": 300000
+      },
+      "faster_payouts": {
+        "on": 150000
+      },
+      "extra_support": {
+        "on": 250000
+      },
+      "ads": {
+        "$0.15M": 150000,
+        "$0.4M": 400000
+      }
+    },
+    "kind": "fixed",
+    "source": "| Discount paid by Aisle, one category, one week you choose | 5%: $0.6M · 10%: $1.2M | ... | Ads and influencer content | $0.15M · $0.4M | (the ten menu rows)"
+  },
+  "buyers_month": {
+    "value": 1200000,
+    "kind": "fixed",
+    "source": "6.5 million visitors and 1.2 million buyers a month; average order $60."
+  },
+  "avg_order": {
+    "value": 60,
+    "kind": "fixed",
+    "source": "6.5 million visitors and 1.2 million buyers a month; average order $60."
+  },
+  "plan_sales_month": {
+    "value": 72000000,
+    "kind": "fixed",
+    "source": "Monthly sales about $72 million."
+  },
+  "plan_bf_cm": {
+    "value": 48000000,
+    "kind": "fixed",
+    "source": "Black Friday week and Cyber Monday are planned at $48 million."
+  },
+  "category_mix": {
+    "value": {
+      "fashion": 45,
+      "home": 30,
+      "electronics": 25
+    },
+    "kind": "fixed",
+    "source": "4,500 independent sellers sell fashion (45% of sales), home (30%) and electronics (25%)."
+  },
+  "holiday_lift": {
+    "value": {
+      "december": 1.128,
+      "january": 1.0
+    },
+    "kind": "fixed",
+    "source": "ours: Census MRTS NAICS 4541, not adjusted, 2023-2025 (dis-veri/census_mrts_4541_mevsim.csv): December/October 1.247 over November/October 1.106 = 1.128, so December weeks are 12.8% above a November week. January: no data in the file, kept at 1.0."
+  },
+  "plan_split": {
+    "value": {
+      "week_4": 0.5,
+      "week_5": 0.5
+    },
+    "kind": "fixed",
+    "source": "ours: the dossier gives only the $48M sum for Black Friday week and Cyber Monday; split evenly between weeks 4 and 5."
+  },
+  "carrier_share": {
+    "value": {
+      "Rapid Parcel": 45,
+      "Meridian": 35,
+      "Dash": 20
+    },
+    "kind": "fixed",
+    "source": "Carriers: Rapid Parcel carries 45% of orders, Meridian 35%, Dash 20%."
+  },
+  "normal_days": {
+    "value": [
+      2,
+      4
+    ],
+    "kind": "fixed",
+    "source": "Normal delivery 2 to 4 days."
+  },
+  "carrier_headroom": {
+    "value": 1.3,
+    "kind": "fixed",
+    "source": "ours: a carrier ships up to 1.3 times a normal week; ShipMatrix Cyber Week 2025: +30% volume over pre-peak with 97-99% delivered within a day of promise (dis-veri/KAYNAKLAR.md)."
+  },
+  "strike_state": {
+    "value": "possible",
+    "kind": "weekly",
+    "source": "From week 5 (Tuesday, December 1): a possible strike at Rapid Parcel. Changes only through an announcement ({\"set\": {\"strike_state\": \"on\"}}) or --strike on|off."
+  },
+  "strike_capacity": {
+    "value": 0.5,
+    "kind": "fixed",
+    "source": "ours: 'Rapid Parcel says it would keep delivering with managers and temporary drivers, more slowly.' How slow is unknown; half its capacity. Anchor: Royal Mail 2022-23 strikes, on time 73.7% against a 93% target (dis-veri/KAYNAKLAR.md)."
+  },
+  "strike_extra_days": {
+    "value": 2,
+    "kind": "fixed",
+    "source": "ours: slower handling by managers and temporary drivers adds 2 days to Rapid Parcel's mid estimate while the strike is on."
+  },
+  "spare_capacity": {
+    "value": 0,
+    "kind": "decision",
+    "source": "Extra capacity from Meridian and Dash for 2 weeks | +20%: $0.4M · +40%: $0.8M. ours: the extra capacity takes Rapid Parcel's backlog first."
+  },
+  "backlog": {
+    "value": 0,
+    "kind": "weekly",
+    "source": "ours: parcels Rapid Parcel cannot carry in a week wait for the next week; each full week of backlog adds 7 days to its delivery estimate."
+  },
+  "checkout_promise": {
+    "value": "2-4 days",
+    "kind": "decision",
+    "source": "The delivery estimate at checkout says \"2–4 days\"."
+  },
+  "free_ship_threshold": {
+    "value": 35,
+    "kind": "decision",
+    "source": "Free shipping over $35."
+  },
+  "payout_freq": {
+    "value": "weekly",
+    "kind": "decision",
+    "source": "Faster seller payouts (weekly → twice a week) for 6 weeks"
+  },
+  "complaint_sla": {
+    "value": "48h",
+    "kind": "decision",
+    "source": "Complaints are answered within 48 hours; claims that a product is fake go to the seller first. Extra support staff for 4 weeks (+100): ours, answers within 24h."
+  },
+  "return_policy": {
+    "value": "orders from November 1 can be returned until January 31",
+    "kind": "fixed",
+    "source": "Holiday returns: orders from November 1 can be returned until January 31."
+  },
+  "discount": {
+    "value": "none",
+    "kind": "decision",
+    "source": "Discount paid by Aisle, one category, one week you choose | 5%: $0.6M · 10%: $1.2M"
+  },
+  "return_shipping": {
+    "value": "paid by the shopper",
+    "kind": "decision",
+    "source": "ours: the dossier does not say return shipping is free, and the menu sells 'Free return shipping for 4 weeks'."
+  },
+  "fake_claims": {
+    "value": "go to the seller first",
+    "kind": "decision",
+    "source": "claims that a product is fake go to the seller first. Authenticity guarantee for 8 weeks: double refund if a product is proven fake"
+  },
+  "seller_audit": {
+    "value": "off",
+    "kind": "decision",
+    "source": "Seller check: audit the top 500 sellers in risky categories, suspend those that fail"
+  },
+  "ads": {
+    "value": "none",
+    "kind": "decision",
+    "source": "Ads and influencer content | $0.15M · $0.4M. ours: runs 2 weeks (the dossier gives no length)."
+  },
+  "channels": {
+    "value": [
+      "email",
+      "push",
+      "in-app banner",
+      "social media"
+    ],
+    "kind": "fixed",
+    "source": "Messages: email, push, in-app banners and social media posts are free."
+  },
+  "message_max_chars": {
+    "value": 600,
+    "kind": "fixed",
+    "source": "the message the company sends: the exact words, up to 600 characters, and the channels (02-challenge.md)"
+  },
+  "actions_per_decision": {
+    "value": [
+      1,
+      3
+    ],
+    "kind": "fixed",
+    "source": "one to three actions from your dossier's decision menu, each at one of the listed levels (02-challenge.md)"
+  },
+  "decisions_max": {
+    "value": 2,
+    "kind": "fixed",
+    "source": "You make exactly two decisions for your client, in any weeks you choose. (02-challenge.md)"
+  }
+}

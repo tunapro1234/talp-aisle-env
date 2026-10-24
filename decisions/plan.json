@@ -2,17 +2,48 @@
   {
     "week": 5,
     "target": "everyone",
-    "actions": [{"action": "extra_capacity", "level": "+40%"}],
-    "message": "Black Friday is on, as planned. Rapid Parcel's drivers' union has said it may strike from December 1, and Rapid Parcel says it would keep delivering more slowly. We have booked 40% more capacity at Meridian and Dash for the next two weeks. Some parcels may still take longer than usual.",
-    "channels": ["email", "in-app banner"],
-    "why": ["Most Black Friday orders ship in week 5.", "Extra capacity is the only lever on delivery delay.", "An honest message keeps trust."]
+    "actions": [
+      {
+        "action": "extra_capacity",
+        "level": "+40%"
+      },
+      {
+        "action": "extra_support",
+        "level": "on"
+      },
+      {
+        "action": "authenticity_guarantee",
+        "level": "on"
+      }
+    ],
+    "message": "Black Friday is on, as planned. Rapid Parcel's drivers' union has said it may strike from December 1. We have booked 40% more capacity at Meridian and Dash for the next two weeks and added 100 support staff, so complaints are answered within a day. For eight weeks, if a product is proven fake, we refund double. Some parcels may still take longer than usual.",
+    "channels": [
+      "email",
+      "in-app banner"
+    ],
+    "why": [
+      "Most Black Friday orders ship in week 5.",
+      "Capacity and support are the levers on delay and complaints.",
+      "The guarantee answers fake-product worries in the busiest weeks."
+    ]
   },
   {
     "week": 6,
     "target": "small sellers",
-    "actions": [{"action": "faster_payouts", "level": "on"}],
+    "actions": [
+      {
+        "action": "faster_payouts",
+        "level": "on"
+      }
+    ],
     "message": "For the next six weeks Aisle pays sellers twice a week instead of weekly, so a slow parcel does not hold up your cash.",
-    "channels": ["email"],
-    "why": ["Small sellers have tight cash flow.", "Delays push their payouts later.", "Keeps sellers active through December."]
+    "channels": [
+      "email"
+    ],
+    "why": [
+      "Small sellers have tight cash flow.",
+      "Delays push their payouts later.",
+      "Keeps sellers active through December."
+    ]
   }
 ]

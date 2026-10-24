@@ -15,6 +15,7 @@ from pathlib import Path
 
 import llm
 from metrics import compute
+from world import World, check
 
 HERE = Path(__file__).resolve().parent
 CFG = json.loads((HERE / "aisle.json").read_text())
@@ -53,15 +54,17 @@ def world_lines(week, decisions, news, group):
         for a in d["actions"]:
             spec = CFG["actions"][a["action"]]
             if week < d["week"] + spec["weeks"]:
-                doing.append("- " + spec["text"].format(level=a["level"]))
+                doing.append("- " + spec["text"].format(level=a["level"], category=a.get("category", "")))
         if targets(d["target"], group):
             told.append(f"- Week {d['week']}, by {' and '.join(d['channels'])}: \"{d['message']}\"")
-    doing = doing or [f"- Business as usual. {' '.join(CFG['business_as_usual'])}"]
+    doing = doing or ["- Business as usual, nothing special."]
     return seen, doing, told
 
 
-def week_prompt(p, week, history, decisions, news):
+def week_prompt(p, week, history, decisions, news, delivery):
     seen, doing, told = world_lines(week, decisions, news, p["group"])
+    carrier = p["traits"].get("ships mostly with")
+    seen += [f"- {delivery['terms']}", f"- {'You ship with ' + carrier + '. ' if carrier else ''}{delivery['parcels']}"]
     options = CFG["statuses"][p["group"]]
     past = "\n".join(f"- Week {h['week']}: {h['status']}. {h.get('note', '')}" for h in history[-3:]) or "- (first week)"
     if p["group"] == "shoppers":
@@ -141,11 +144,12 @@ class Run:
         self.decisions = [] if a.type == "nodecision" else json.loads(Path(a.decisions).read_text())
         news = json.loads((HERE / "announcements.json").read_text())
         self.news = [n for n in news if not (a.type == "plan_nosurprises" and n.get("surprise", True))]
+        errors = check(self.decisions, lambda t: any(targets(t, g) for g in CFG["statuses"]))
+        if errors:
+            raise SystemExit("decisions rejected:\n  " + "\n  ".join(errors))
+        self.world = World(self.decisions, self.news, a.strike)
         self.calls, self.weekly, self.probe = [], [], []
         self.history = {p["id"]: [] for p in self.personas}
-        for d in self.decisions:
-            if not any(targets(d["target"], g) for g in CFG["statuses"]):
-                raise SystemExit(f"target '{d['target']}' reaches nobody: use everyone, shoppers, sellers, small/large sellers")
 
     def call(self, pid, week, prompt, attempt, max_tokens=400):
         cid = f"{pid}-w{week}-{attempt}"
@@ -154,8 +158,8 @@ class Run:
                            "model": self.a.model})
         return cid, text
 
-    def persona_week(self, p, week):
-        prompt = week_prompt(p, week, self.history[p["id"]], self.decisions, self.news)
+    def persona_week(self, p, week, delivery):
+        prompt = week_prompt(p, week, self.history[p["id"]], self.decisions, self.news, delivery)
         for attempt in range(3):
             cid, text = self.call(p["id"], week, prompt, attempt)
             row = parse_week(text, p["group"])
@@ -183,22 +187,23 @@ class Run:
         with ThreadPoolExecutor(self.a.workers) as ex:
             return list(ex.map(lambda p: fn(p, *args), self.personas))
 
-    def persona_run(self, p):
-        """One persona's whole run. Personas do not see each other, so they run side by side."""
-        rows = self.persona_checkin(p, "start") if self.a.probe else []
-        for week in range(1, 11):
-            self.history[p["id"]].append(self.persona_week(p, week))
-        if self.a.probe:
-            rows += self.persona_checkin(p, "end")
-        print(f"{p['id']} done: {self.history[p['id']][-1]['status']}", flush=True)
-        return rows
-
     def go(self):
         if self.out.exists():
             shutil.rmtree(self.out)
         self.out.mkdir(parents=True)
-        self.probe = sum(self.each(self.persona_run), [])
-        self.weekly = sorted((r for h in self.history.values() for r in h), key=lambda r: (r["week"], r["persona"]))
+        if self.a.probe:
+            self.probe += sum(self.each(self.persona_checkin, "start"), [])
+        self.world.row(0, [], self.personas)
+        for week in range(1, 11):                 # the world links personas, so weeks run in order
+            delivery = self.world.begin(week)
+            rows = self.each(self.persona_week, week, delivery)
+            for r in rows:
+                self.history[r["persona"]].append(r)
+            self.weekly += rows
+            self.world.end(week, self.personas, rows)
+            print(f"week {week}: {self.world.rows[-1]}", flush=True)
+        if self.a.probe:
+            self.probe += sum(self.each(self.persona_checkin, "end"), [])
         self.save()
 
     def save(self):
@@ -213,6 +218,7 @@ class Run:
         (self.out / "metrics.json").write_text(json.dumps(m, indent=2) + "\n")
         run = {"company": CFG["company"], "type": self.a.type, "seed": self.a.seed, "model": self.a.model,
                "decisions": self.decisions, "announcements": [n.get("id", n["title"]) for n in self.news]}
+        self.world.write(self.out / "world_weekly.csv")
         (self.out / "run.json").write_text(json.dumps(run, indent=2, ensure_ascii=False) + "\n")   # last: marks a finished run
         st = llm.STATS
         print(f"model calls {st['calls']} (cached {len(self.calls) - st['calls']}), errors {st['errors']} (429: {st['429']}), "
@@ -230,6 +236,7 @@ def main():
     ap.add_argument("--limit", type=int, help="only the first N personas (quick test)")
     ap.add_argument("--workers", type=int, default=36)
     ap.add_argument("--out")
+    ap.add_argument("--strike", choices=("on", "off"), help="test: Rapid Parcel strike on / off from week 5 (default: announcements decide)")
     Run(ap.parse_args()).go()
 
 
