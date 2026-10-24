@@ -122,6 +122,24 @@ def parse_week(text, group):
     return row
 
 
+def bind_orders(row, history):
+    """Orders follow the status the persona chose (the model often says 'buys less' and still orders as much as ever):
+    paused or moved to a rival -> 0 orders; buys less -> over its 'buys less' weeks at most half of its normal week
+    (the mean of its own earlier 'buys as usual' weeks, else of all its earlier weeks; week 1 has no normal, no cap).
+    The half is counted over the weeks together, so a one-order-a-month shopper still orders now and then.
+    What the model said is kept in orders_said when it was cut. Returns stay: they can be of earlier weeks' orders."""
+    said = row["orders"]
+    if row["status"] in ("paused", "moved to a rival"):
+        row["orders"] = 0
+    elif row["status"] == "buys less" and history:
+        usual = [h["orders"] for h in history if h["status"] == "buys as usual"] or [h["orders"] for h in history]
+        less = [h for h in history if h["status"] == "buys less"]
+        allowed = int(0.5 * sum(usual) / len(usual) * (len(less) + 1)) - sum(h["orders"] for h in less)
+        row["orders"] = max(0, min(said, allowed))
+    if row["orders"] != said:
+        row["orders_said"] = said
+
+
 def checkin_prompt(p, when, history, decisions, news):
     qs = "\n".join(f"{k}: {v.format(company=CFG['name'])}" for k, v in CFG["checkin"].items())
     if when == "start":
@@ -173,6 +191,8 @@ class Run:
             cid, text = self.call(p["id"], week, prompt, attempt)
             row = parse_week(text, p["group"])
             if row:
+                if p["group"] == "shoppers" and self.a.bind == "on":
+                    bind_orders(row, self.history[p["id"]])
                 return {"persona": p["id"], "week": week, **row, "call": cid}
             prompt += f"\n\nYour last line must be exactly: Status: <one of {' | '.join(CFG['statuses'][p['group']])}>"
         raise SystemExit(f"{p['id']} week {week}: no valid status after 3 tries; last answer:\n{text}")
@@ -259,6 +279,7 @@ def main():
     ap.add_argument("--limit", type=int, help="only the first N personas (quick test)")
     ap.add_argument("--workers", type=int, default=36)
     ap.add_argument("--out")
+    ap.add_argument("--bind", choices=("on", "off"), default="on", help="orders follow the status (bind_orders); off: as the model said")
     ap.add_argument("--strike", choices=("on", "off"), help="test: Rapid Parcel strike on / off from week 5 (default: announcements decide)")
     Run(ap.parse_args()).go()
 
