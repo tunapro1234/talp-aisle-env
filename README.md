@@ -29,6 +29,7 @@ python sim.py --type plan --seed 1 --probe         # runs/plan_1
 python sim.py --type nodecision --seed 1 --probe   # runs/nodecision_1
 python sim.py --type plan --seed 1 --limit 4       # quick test, four personas
 python sim.py --type plan --seed 1 --model fake    # no network, checks the pipeline
+python pairs.py --seeds 1-6 --probe --strike on       # nodecision then plan per seed, same cache: paired differences
 ```
 
 Each persona runs its ten weeks in its own thread (personas do not see each other): a full run with
