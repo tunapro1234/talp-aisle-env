@@ -29,24 +29,24 @@
   "target": "everyone: shoppers, small sellers and large sellers",
   "actions": [
    {
-    "action": "Extra capacity from Meridian and Dash for 2 weeks",
-    "level": "+20%"
-   },
-   {
     "action": "Extra support staff for 4 weeks (+100)",
     "level": "on"
    },
    {
     "action": "Free return shipping for 4 weeks",
     "level": "on"
+   },
+   {
+    "action": "Extra capacity from Meridian and Dash for 2 weeks",
+    "level": "+40%"
    }
   ],
-  "message": "Some parcels are still arriving late because of the Rapid Parcel strike. For the next two weeks we have added more delivery capacity with Meridian and Dash. For the next four weeks, return shipping on Aisle is free, and 100 more support staff answer your questions faster. Sellers: you can keep moving parcels to Meridian and Dash, and Aisle pays the return shipping.",
+  "message": "Rapid Parcel still cannot say when its deliveries will be back to normal, so we are keeping extra delivery capacity with Meridian and Dash for two more weeks. Sellers can keep moving parcels to them. Returns are free until mid-January, so holiday gifts can go back at no cost. We have also added 100 people to our support team: if an order is late, write to us and we will answer within a day.",
   "channels": [
    "email",
    "in-app banner",
    "social media"
   ],
-  "why": "The strike has no end date and our week-5 delivery capacity ends after week 6; 20% more room at Meridian and Dash for weeks 7-8 keeps Christmas parcels moving.\nLate parcels turn into questions and returns; 100 more support staff and free return shipping for weeks 7-10 take the waiting and the cost out of a late gift.\nBoth decisions total $2.05M of $2.5M; we watch the return rate, since free returns can raise it."
+  "why": "Rapid Parcel has given no end date for its strike, and the week 5 capacity ends after week 6; in our runs, keeping +40% cut the parcel backlog by about 40% in weeks 7-10.\nLate holiday parcels mean worried shoppers: 100 more support staff answer within a day, and in our runs complaints in weeks 7-10 fell by more than half.\nFree returns make holiday gifts safe to buy, though our runs show returns rising; both decisions total $2.45M of $2.5M."
  }
 ]

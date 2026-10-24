@@ -1,49 +1,52 @@
 [
-  {
-    "week": 5,
-    "target": "everyone",
-    "actions": [
-      {
-        "action": "extra_capacity",
-        "level": "+40%"
-      },
-      {
-        "action": "extra_support",
-        "level": "on"
-      },
-      {
-        "action": "authenticity_guarantee",
-        "level": "on"
-      }
-    ],
-    "message": "Black Friday is on, as planned. Rapid Parcel's drivers' union has said it may strike from December 1. We have booked 40% more capacity at Meridian and Dash for the next two weeks and added 100 support staff, so complaints are answered within a day. For eight weeks, if a product is proven fake, we refund double. Some parcels may still take longer than usual.",
-    "channels": [
-      "email",
-      "in-app banner"
-    ],
-    "why": [
-      "Most Black Friday orders ship in week 5.",
-      "Capacity and support are the levers on delay and complaints.",
-      "The guarantee answers fake-product worries in the busiest weeks."
-    ]
-  },
-  {
-    "week": 6,
-    "target": "small sellers",
-    "actions": [
-      {
-        "action": "faster_payouts",
-        "level": "on"
-      }
-    ],
-    "message": "For the next six weeks Aisle pays sellers twice a week instead of weekly, so a slow parcel does not hold up your cash.",
-    "channels": [
-      "email"
-    ],
-    "why": [
-      "Small sellers have tight cash flow.",
-      "Delays push their payouts later.",
-      "Keeps sellers active through December."
-    ]
-  }
+ {
+  "week": 5,
+  "target": "everyone: shoppers, small sellers and large sellers",
+  "actions": [
+   {
+    "action": "Extra capacity from Meridian and Dash for 2 weeks",
+    "level": "+40%"
+   },
+   {
+    "action": "Faster seller payouts (weekly → twice a week) for 6 weeks",
+    "level": "on"
+   },
+   {
+    "action": "Ads and influencer content",
+    "level": "$0.15M"
+   }
+  ],
+  "message": "Your holiday orders are on their way. We have added extra delivery capacity with Meridian and Dash for the next two weeks to keep parcels moving. Sellers: you can move parcels to Meridian and Dash, and for the next six weeks your payouts come twice a week instead of once.",
+  "channels": [
+   "email",
+   "in-app banner",
+   "social media"
+  ],
+  "why": "Most Black Friday and Cyber Monday orders ship in week 5, when the Rapid Parcel strike may begin; 40% more room at Meridian and Dash lets sellers move parcels off Rapid Parcel in weeks 5-6.\nSellers stocked up for the holidays and many run on tight cash; paying them twice a week for six weeks keeps them selling through a slow December.\nA small ad push keeps shoppers coming back after Cyber Monday; at $1.1M it leaves $1.4M and our second decision for what we cannot see yet."
+ },
+ {
+  "week": 7,
+  "target": "everyone: shoppers, small sellers and large sellers",
+  "actions": [
+   {
+    "action": "Extra support staff for 4 weeks (+100)",
+    "level": "on"
+   },
+   {
+    "action": "Free return shipping for 4 weeks",
+    "level": "on"
+   },
+   {
+    "action": "Extra capacity from Meridian and Dash for 2 weeks",
+    "level": "+40%"
+   }
+  ],
+  "message": "Rapid Parcel still cannot say when its deliveries will be back to normal, so we are keeping extra delivery capacity with Meridian and Dash for two more weeks. Sellers can keep moving parcels to them. Returns are free until mid-January, so holiday gifts can go back at no cost. We have also added 100 people to our support team: if an order is late, write to us and we will answer within a day.",
+  "channels": [
+   "email",
+   "in-app banner",
+   "social media"
+  ],
+  "why": "Rapid Parcel has given no end date for its strike, and the week 5 capacity ends after week 6; in our runs, keeping +40% cut the parcel backlog by about 40% in weeks 7-10.\nLate holiday parcels mean worried shoppers: 100 more support staff answer within a day, and in our runs complaints in weeks 7-10 fell by more than half.\nFree returns make holiday gifts safe to buy, though our runs show returns rising; both decisions total $2.45M of $2.5M."
+ }
 ]

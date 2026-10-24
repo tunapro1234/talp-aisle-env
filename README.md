@@ -17,8 +17,8 @@ reads what it can see and the model writes what it does and its status. Output i
 | `report.py` | `python report.py [runs/a runs/b ...]` -> `runs/report.html`: runs side by side, sales vs plan, status mix, delivery, policy grid, persona notes (no LLM) |
 | `aisle.json` | the dossier as data: statuses, weeks, known crisis, business as usual, action texts, check-in questions |
 | `personas.jsonl` | personas: `id`, `group`, `name`, `weight`, `traits`, `story` |
-| `decisions/plan.json` | an example plan (decision 1 has three actions); `decisions/none.json` is empty |
-| `decisions/locked.json` | the team's locked decision 1 (week 5: extra capacity, faster payouts, ads; $1.1M), word for word |
+| `decisions/locked.json` | the team's two locked decisions, word for word: week 5 (extra capacity +40%, faster payouts, ads; $1.1M) and week 7 (extra support, free returns, extra capacity +40%; $1.35M), $2.45M in all |
+| `decisions/plan.json` | the default for `--decisions`: the same as `locked.json`; `decisions/none.json` is empty |
 | `announcements.json` | crises announced on the dashboard: `[{"id", "week", "title", "text", "surprise": true}]`; optional `"audience"` (below) |
 
 ## Run
