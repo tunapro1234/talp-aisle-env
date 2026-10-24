@@ -200,13 +200,19 @@ def checkin_prompt(p, when, history, decisions, news):
     if when == "start":
         ctx = "It is November 1, before the ten weeks start."
     else:
-        _, _, told = world_lines(10, decisions, [a for a in news if hears(a, p)], p["group"], window=G >= 4)
+        heard = [a for a in news if hears(a, p)]
+        _, _, told = world_lines(10, decisions, heard, p["group"])   # every message, no window: the survey looks back
+        events = [f"- Week {a['week']}: {a['title']}" for a in heard]
+        did = [f"- Weeks {d['week']}-{min(10, d['week'] + CFG['actions'][x['action']]['weeks'] - 1)}: "
+               + CFG["actions"][x["action"]]["text"].format(level=x["level"], category=x.get("category", ""))
+               for d in decisions for x in d["actions"]]
         weeks = "\n".join(f"- Week {h['week']}: {h['status']}. {h.get('note', '')}" for h in history)
         if G >= 1:
             weeks = "\n".join(f"- Week {h['week']}: {h['status']}; " + (f"{h['orders']} orders, {h['returns']} returned."
                                if "orders" in h else f"sales ${h['sales_usd']:,}.") for h in history)
-        ctx = f"It is January 11; the ten weeks are over. Your weeks:\n{weeks}\nMessages Aisle sent you:\n" \
-              f"{chr(10).join(told) or '- none'}"
+        ctx = (f"It is January 11; the ten weeks are over. What happened:\n{chr(10).join(events) or '- nothing unusual'}\n"
+               f"What Aisle did:\n{chr(10).join(did) or '- business as usual'}\nYour weeks:\n{weeks}\n"
+               f"Messages Aisle sent you:\n{chr(10).join(told) or '- none'}")
     return f"""{persona_block(p)}
 
 About Aisle: {CFG['about']}
