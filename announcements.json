@@ -3,7 +3,7 @@
     "id": "w3-fake-sneakers",
     "week": 3,
     "title": "The fake sneakers video",
-    "text": "A TikTok creator with 1.8 million followers posted a video: sneakers bought on Aisle, she says, are fake. It is being shared widely; people are tagging Aisle under its Black Friday ads. Known: the order is real and came from a seller on Aisle. Not known: whether the sneakers are fake; how many sellers or products are involved.",
+    "text": "A TikTok creator with 1.8 million followers posted a video: sneakers bought on Aisle, she says, are fake. It is being shared widely; people are tagging Aisle under its Black Friday ads.\nKnown: the order is real and came from a seller on Aisle.\nNot known: whether the sneakers are fake; how many sellers or products are involved.",
     "surprise": true,
     "source": "dashboard, Company update week 3, published 24 Oct 14:00"
   },
@@ -28,10 +28,22 @@
     "source": "dashboard, Known crisis week 5, published 24 Oct 15:00"
   },
   {
+    "id": "w7-strike-deal",
+    "update_of": "w5-strike",
+    "week": 7,
+    "title": "Rapid Parcel strike ends",
+    "text": "Rapid Parcel and the union reached a deal on December 17. Rapid Parcel expects to clear its backlog before Christmas.",
+    "surprise": false,
+    "set": {
+      "strike_state": "ending"
+    },
+    "source": "dashboard, Known crisis week 7, published 24 Oct 16:00 (text word for word; title ours)"
+  },
+  {
     "id": "w7-shutdown",
     "week": 7,
     "title": "Government shutdown",
-    "text": "Overnight, Congress missed its funding deadline, and parts of the federal government shut down. Some federal workers have been sent home; others, such as air traffic controllers and TSA officers, must keep working without pay. Nobody knows how long it will last. Known: Social Security payments and the Postal Service continue. Not known: how long it will last; when federal workers will be paid; which services will slow down. Federal workers and contractors are a small share of Aisle's buyers, larger around Washington, D.C. Some sellers were waiting for Small Business Administration loans, which are now paused.",
+    "text": "Overnight, Congress missed its funding deadline, and parts of the federal government shut down. Some federal workers have been sent home; others, such as air traffic controllers and TSA officers, must keep working without pay. Nobody knows how long it will last.\n\nKnown: Social Security payments and the Postal Service continue.\nNot known: how long it will last; when federal workers will be paid; which services will slow down.\n\nFederal workers and contractors are a small share of Aisle's buyers, larger around Washington, D.C. Some sellers were waiting for Small Business Administration loans, which are now paused.",
     "surprise": true,
     "source": "dashboard, Government shutdown, week 7, published 24 Oct 16:00"
   },
