@@ -65,7 +65,8 @@ moves (`announcements.json` `"set": {"strike_state": "on"}`, or `--strike on|off
 reads Aisle's terms and how fast parcels move. After the week: orders x weight x $60 = sales; Rapid Parcel
 ships what its capacity allows (half while on strike), extra capacity takes the rest, what is left waits as
 backlog and lengthens next week's delivery. One row per week in `runs/<name>/world_weekly.csv`.
-Parcel counts are scaled so week 1 matches the plan (personas' own order counts run high; sales are not scaled).
+Personas' own order counts run high, so parcel counts are scaled so week 1 matches the plan, and sales
+so weeks 1-3 together match it (`sales_usd`; the unscaled figure is `sales_raw_usd`). Goals are ratios and do not change.
 
 ## What a persona sees in week N
 

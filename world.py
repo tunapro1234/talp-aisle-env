@@ -19,7 +19,7 @@ POLICY = ("checkout_promise", "free_ship_threshold", "spare_capacity", "payout_f
           "return_shipping", "fake_claims", "seller_audit", "ads")
 COLUMNS = ["week", "budget_spent", "budget_left", "sales_usd", "plan_usd", "sales_vs_plan", "orders",
            *[f"shoppers_{s.replace(' ', '_')}" for s in SHOPPER], *[f"sellers_{s}" for s in SELLER],
-           "strike_state", "rapid_days", "backlog_parcels", *POLICY, "returns", "complaints"]
+           "strike_state", "rapid_days", "backlog_parcels", *POLICY, "returns", "complaints", "sales_raw_usd"]
 
 
 def level(s):
@@ -179,13 +179,20 @@ class World:
         plan = plan_usd(week) if week else 0
         self.rows.append({
             "week": week, "budget_spent": s["budget_spent"], "budget_left": W["budget_total"] - s["budget_spent"],
-            "sales_usd": round(sales), "plan_usd": round(plan), "sales_vs_plan": round(sales / plan, 3) if plan else "",
+            "sales_raw_usd": round(sales), "plan_usd": round(plan),
             "orders": round(orders), **{f"shoppers_{x.replace(' ', '_')}": n(True, x) for x in SHOPPER},
             **{f"sellers_{x}": n(False, x) for x in SELLER}, "strike_state": s["strike_state"],
             "rapid_days": s["rapid_days"], "backlog_parcels": round(s["backlog"]), **{k: s[k] for k in POLICY},
             "returns": round(returns), "complaints": round(complaints)})
 
     def write(self, path):
+        """Sales are scaled once so weeks 1-3 together match the plan (ours: the personas' order counts run high,
+        as parcels are scaled in end()); the personas' own figure stays in sales_raw_usd."""
+        base = [r for r in self.rows if 1 <= r["week"] <= 3]
+        scale = sum(r["plan_usd"] for r in base) / max(sum(r["sales_raw_usd"] for r in base), 1)
+        for r in self.rows:
+            r["sales_usd"] = round(r["sales_raw_usd"] * scale)
+            r["sales_vs_plan"] = round(r["sales_usd"] / r["plan_usd"], 3) if r["plan_usd"] else ""
         with open(path, "w", newline="") as f:
             out = csv.DictWriter(f, COLUMNS)
             out.writeheader()
