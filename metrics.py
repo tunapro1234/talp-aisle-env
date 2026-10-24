@@ -34,9 +34,11 @@ def compute(personas, weekly, probe):
     trust = {}
     for a in probe:
         if group[a["persona"]] == "shoppers" and a["question"] in ("1a", "1b"):
-            trust.setdefault(a["when"], []).append(a["score"])
-    if "start" in trust and "end" in trust:
-        m["goal_4"] = round(sum(trust["end"]) / len(trust["end"]) - sum(trust["start"]) / len(trust["start"]), 2)
+            trust.setdefault(a["when"], {}).setdefault(a["persona"], []).append(a["score"])
+    both = sorted(set(trust.get("start", {})) & set(trust.get("end", {})))   # a missing check-in drops that persona
+    if both:
+        mean = lambda when: sum(sum(trust[when][k]) for k in both) / sum(len(trust[when][k]) for k in both)
+        m["goal_4"] = round(mean("end") - mean("start"), 2)
     m["units"] = {
         "goal_1": "shoppers' weekly orders, weeks 4-10 as % of weeks 1-3 (weighted; no plan lift)",
         "goal_2": "% of sellers (weighted) active or reduced in week 10",

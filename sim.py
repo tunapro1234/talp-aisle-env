@@ -11,6 +11,7 @@ import hashlib
 import json
 import re
 import shutil
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -156,6 +157,7 @@ class Run:
             raise SystemExit("decisions rejected:\n  " + "\n  ".join(errors))
         self.world = World(self.decisions, self.news, a.strike)
         self.calls, self.weekly, self.probe = [], [], []
+        self.probe_missing, self.lock = {}, threading.Lock()   # check-ins that gave no eight scores: {when: [ids]}
         self.history = {p["id"]: [] for p in self.personas}
 
     def call(self, pid, week, prompt, attempt, max_tokens=400):
@@ -176,10 +178,15 @@ class Run:
         raise SystemExit(f"{p['id']} week {week}: no valid status after 3 tries; last answer:\n{text}")
 
     def persona_checkin(self, p, when):
+        """Eight scores, or [] and the persona listed in probe_missing. The model sometimes reasons in prose first and
+        runs out of tokens before the JSON; a retry with the same prompt and budget would only read the same cached
+        answer, so each retry asks for JSON only and gets 100 more tokens (a new cache key)."""
         week = 0 if when == "start" else 11
         prompt = checkin_prompt(p, when, self.history[p["id"]], self.decisions, self.news)
-        for attempt in range(3):
-            cid, text = self.call(p["id"], week, prompt, attempt, max_tokens=200)
+        for attempt in range(6):
+            if attempt == 1:
+                prompt += "\n\nReply with the JSON object only, nothing before or after it."
+            cid, text = self.call(p["id"], week, prompt, attempt, max_tokens=200 + 100 * attempt)
             m = re.search(r"\{.*\}", text, re.S)
             try:
                 s = json.loads(m.group()) if m else {}
@@ -188,7 +195,10 @@ class Run:
                 scores = {}
             if len(scores) == len(CFG["checkin"]):
                 return [{"persona": p["id"], "when": when, "question": q, "score": v, "call": cid} for q, v in scores.items()]
-        raise SystemExit(f"{p['id']} {when} check-in: no eight scores after 3 tries")
+        print(f"{p['id']} {when} check-in: no eight scores after 6 tries; recorded as missing", flush=True)
+        with self.lock:
+            self.probe_missing.setdefault(when, []).append(p["id"])
+        return []
 
     def each(self, fn, *args):
         with ThreadPoolExecutor(self.a.workers) as ex:
@@ -222,9 +232,11 @@ class Run:
         if self.a.probe:
             jl("probe.jsonl", self.probe)
         m = compute(self.personas, self.weekly, self.probe)
+        if self.a.probe:
+            m["probe_missing"] = sum(len(ids) for ids in self.probe_missing.values())
         (self.out / "metrics.json").write_text(json.dumps(m, indent=2) + "\n")
         run = {"company": CFG["company"], "type": self.a.type, "seed": self.a.seed, "model": self.a.model,
-               "decisions": self.locked, "probe": self.a.probe, "probe_eksik": {},   # a missing check-in stops the run
+               "decisions": self.locked, "probe": self.a.probe, "probe_eksik": {w: sorted(ids) for w, ids in self.probe_missing.items()},
                "announcements": {"file": "announcements.json", "n": len(self.all_news), "ids": [n.get("id") for n in self.all_news],
                                  "sha256": sha(HERE / "announcements.json"), "used": [n.get("id") for n in self.news]},
                "decisions_file": None if self.a.type == "nodecision" else
