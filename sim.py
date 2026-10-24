@@ -7,6 +7,7 @@ metrics.json, and probe.jsonl with --probe. Each week every persona reads what i
 doing, Aisle's messages sent to its group, its own last weeks) and the model writes what it does and its status.
 """
 import argparse
+import hashlib
 import json
 import re
 import shutil
@@ -24,6 +25,10 @@ SELLER_GROUPS = ("small sellers", "large sellers")
 
 def load_jsonl(path):
     return [json.loads(s) for s in Path(path).read_text().splitlines() if s.strip()]
+
+
+def sha(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
 def targets(target, group):
@@ -144,6 +149,7 @@ class Run:
         self.locked = [] if a.type == "nodecision" else json.loads(Path(a.decisions).read_text())   # run.json keeps these
         self.decisions = normalize(self.locked)
         news = json.loads((HERE / "announcements.json").read_text())
+        self.all_news = news
         self.news = [n for n in news if not (a.type == "plan_nosurprises" and n.get("surprise", True))]
         errors = check(self.decisions, lambda t: any(targets(t, g) for g in CFG["statuses"]))
         if errors:
@@ -218,7 +224,11 @@ class Run:
         m = compute(self.personas, self.weekly, self.probe)
         (self.out / "metrics.json").write_text(json.dumps(m, indent=2) + "\n")
         run = {"company": CFG["company"], "type": self.a.type, "seed": self.a.seed, "model": self.a.model,
-               "decisions": self.locked, "announcements": [n.get("id", n["title"]) for n in self.news]}
+               "decisions": self.locked, "probe": self.a.probe, "probe_eksik": {},   # a missing check-in stops the run
+               "announcements": {"file": "announcements.json", "n": len(self.all_news), "ids": [n.get("id") for n in self.all_news],
+                                 "sha256": sha(HERE / "announcements.json"), "used": [n.get("id") for n in self.news]},
+               "decisions_file": None if self.a.type == "nodecision" else
+               {"file": Path(self.a.decisions).name, "sha256": sha(self.a.decisions)}}
         self.world.write(self.out / "world_weekly.csv")
         (self.out / "run.json").write_text(json.dumps(run, indent=2, ensure_ascii=False) + "\n")   # last: marks a finished run
         st = llm.STATS
