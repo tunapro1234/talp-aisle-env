@@ -20,6 +20,14 @@ from metrics import compute
 from world import World, check, normalize
 
 HERE = Path(__file__).resolve().parent
+# G>=3: world.json plan, W4 = plan_bf_cm * plan_split.week_4 = $24M against a normal week 72M * 12 / 52 = $16.6M -> 1.44
+# G>=5: world.json holiday_lift: December weeks 1.128 x a normal week, January 1.0
+DECEMBER = {True: "you keep ordering through December, about 1.1 times your normal week, Christmas week too; "
+                  "in early January about your normal week",
+            False: "your sales run about 1.1 times a normal week through December, Christmas week too; "
+                   "about a normal week in early January"}
+SEASON = {True: "in each of these two weeks you usually order about 1.4 times your normal week",
+          False: "in each of these two weeks your sales usually run about 1.4 times a normal week"}
 CFG = json.loads((HERE / "aisle.json").read_text())
 SELLER_GROUPS = ("small sellers", "large sellers")
 
@@ -83,7 +91,10 @@ def persona_block(p):
     return f"{head}\n{traits}\n{p['story']}"
 
 
-def world_lines(week, decisions, news, group):
+G = 0   # talp-persona-new Gemini iterations (cumulative): 1 fact line, 2 returns cap, 3 season line, 4 message window
+
+
+def world_lines(week, decisions, news, group, window=False):
     """What a persona of this group can see in this week."""
     seen = [f"- {CFG['known_crisis']['text']}"] if week >= CFG["known_crisis"]["from_week"] else []
     seen += [f"- Week {a['week']}: {a['title']}. {a['text']}" for a in news if a["week"] <= week]
@@ -95,18 +106,28 @@ def world_lines(week, decisions, news, group):
             spec = CFG["actions"][a["action"]]
             if week < d["week"] + spec["weeks"]:
                 doing.append("- " + spec["text"].format(level=a["level"], category=a.get("category", "")))
-        if targets(d["target"], group):
+        if targets(d["target"], group) and not (window and week > d["week"] + 1):
             told.append(f"- Week {d['week']}, by {' and '.join(d['channels'])}: \"{d['message']}\"")
     doing = doing or ["- Business as usual, nothing special."]
     return seen, doing, told
 
 
+def fact(p, h):
+    """G>=1: one sentence the env computes from last week's row, in place of the persona's own notes."""
+    if p["group"] == "shoppers":
+        return (f"- Last week you placed {h['orders']} orders, returned {h['returns']}, your parcels took about "
+                f"{h['days']:g} days; your status was {h['status']}.")
+    return f"- Last week your sales on Aisle were ${h['sales_usd']:,}; your status was {h['status']}."
+
+
 def week_prompt(p, week, history, decisions, news, delivery, wom=None):
-    seen, doing, told = world_lines(week, decisions, [a for a in news if hears(a, p)], p["group"])
+    seen, doing, told = world_lines(week, decisions, [a for a in news if hears(a, p)], p["group"], window=G >= 4)
     carrier = p["traits"].get("ships mostly with")
     seen += [f"- {delivery['terms']}", f"- {'You ship with ' + carrier + '. ' if carrier else ''}{delivery['parcels']}"]
     options = CFG["statuses"][p["group"]]
     past = "\n".join(f"- Week {h['week']}: {h['status']}. {h.get('note', '')}" for h in history[-3:]) or "- (first week)"
+    if G >= 1:
+        past = fact(p, history[-1]) if history else "- (first week)"
     if p["group"] == "shoppers":
         numbers = "Orders: <orders you place on Aisle this week, a whole number>\nReturned: <orders you send back this week>"
     else:
@@ -179,8 +200,11 @@ def checkin_prompt(p, when, history, decisions, news):
     if when == "start":
         ctx = "It is November 1, before the ten weeks start."
     else:
-        _, _, told = world_lines(10, decisions, [a for a in news if hears(a, p)], p["group"])
+        _, _, told = world_lines(10, decisions, [a for a in news if hears(a, p)], p["group"], window=G >= 4)
         weeks = "\n".join(f"- Week {h['week']}: {h['status']}. {h.get('note', '')}" for h in history)
+        if G >= 1:
+            weeks = "\n".join(f"- Week {h['week']}: {h['status']}; " + (f"{h['orders']} orders, {h['returns']} returned."
+                               if "orders" in h else f"sales ${h['sales_usd']:,}.") for h in history)
         ctx = f"It is January 11; the ten weeks are over. Your weeks:\n{weeks}\nMessages Aisle sent you:\n" \
               f"{chr(10).join(told) or '- none'}"
     return f"""{persona_block(p)}
@@ -199,6 +223,12 @@ class Run:
         self.a = a
         self.out = Path(a.out or HERE / "runs" / f"{a.type}_{a.seed}")
         self.personas = load_jsonl(HERE / "personas.jsonl")[: a.limit or None]
+        if G >= 3:
+            for p in self.personas:
+                p["traits"]["Black Friday week and Cyber Monday week"] = SEASON[p["group"] == "shoppers"]
+        if G >= 5:
+            for p in self.personas:
+                p["traits"]["December weeks and early January"] = DECEMBER[p["group"] == "shoppers"]
         self.locked = [] if a.type == "nodecision" else json.loads(Path(a.decisions).read_text())   # run.json keeps these
         self.decisions = normalize(self.locked)
         news = json.loads((HERE / "announcements.json").read_text())
@@ -228,6 +258,12 @@ class Run:
             if row:
                 if p["group"] == "shoppers" and self.a.bind == "on":
                     bind_orders(row, self.history[p["id"]])
+                if p["group"] == "shoppers":
+                    row["days"] = delivery["days"]
+                    h = self.history[p["id"]]
+                    cap = row["orders"] + (h[-1]["orders"] if h else 0)
+                    if G >= 2 and row["returns"] > cap:
+                        row["returns_said"], row["returns"] = row["returns"], cap
                 return {"persona": p["id"], "week": week, **row, "call": cid}
             prompt += f"\n\nYour last line must be exactly: Status: <one of {' | '.join(CFG['statuses'][p['group']])}>"
         raise SystemExit(f"{p['id']} week {week}: no valid status after 3 tries; last answer:\n{text}")
@@ -293,7 +329,7 @@ class Run:
             m["probe_missing"] = sum(len(ids) for ids in self.probe_missing.values())
         (self.out / "metrics.json").write_text(json.dumps(m, indent=2) + "\n")
         run = {"company": CFG["company"], "type": self.a.type, "seed": self.a.seed, "model": self.a.model,
-               "decisions": self.locked, "probe": self.a.probe, "wom": self.a.wom, "probe_eksik": {w: sorted(ids) for w, ids in self.probe_missing.items()},
+               "decisions": self.locked, "probe": self.a.probe, "wom": self.a.wom, "g": G, "probe_eksik": {w: sorted(ids) for w, ids in self.probe_missing.items()},
                "announcements": {"file": "announcements.json", "n": len(self.all_news), "ids": [n.get("id") for n in self.all_news],
                                  "sha256": sha(HERE / "announcements.json"), "used": [n.get("id") for n in self.news]},
                "decisions_file": None if self.a.type == "nodecision" else
@@ -319,8 +355,12 @@ def main():
     ap.add_argument("--bind", choices=("on", "off"), default="on", help="orders follow the status (bind_orders); off: as the model said")
     ap.add_argument("--wom", choices=("on", "off"), default="off",
                     help="word of mouth: from week 2 each persona hears how its group did last week, and two of their notes")
+    ap.add_argument("--g", type=int, default=5, help="talp-persona-new Gemini iteration 0-5 (cumulative; 5 = hand-in setting, 0 = off)")
     ap.add_argument("--strike", choices=("on", "off"), help="test: Rapid Parcel strike on / off from week 5 (default: announcements decide)")
-    Run(ap.parse_args()).go()
+    a = ap.parse_args()
+    global G
+    G = a.g
+    Run(a).go()
 
 
 if __name__ == "__main__":

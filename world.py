@@ -158,7 +158,8 @@ class World:
         strike = " (its drivers are on strike)" if on else ""
         parcels = (f"Parcels this week: Rapid Parcel{strike}, which carries 45% of Aisle's orders, takes about "
                    f"{s['rapid_days']:g} days; Meridian and Dash about {mid:g} days.")
-        return {"terms": terms, "parcels": parcels}
+        return {"terms": terms, "parcels": parcels,   # days: a shopper's parcel, 45% Rapid Parcel (talp-persona-new g1)
+                "days": round(self.rapid_share * s["rapid_days"] + (1 - self.rapid_share) * mid, 1)}
 
     def end(self, week, personas, rows):
         s, p = self.s, {x["id"]: x for x in personas}
